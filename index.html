@@ -1,947 +1,1051 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, Search, Grid, List, Calendar, MapPin, Tag, Users, Heart, MessageCircle, Star, Award } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanielu Family Story</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'purple': {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            900: '#4c1d95',
+                        },
+                        'pink': {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            600: '#db2777',
+                        },
+                        'red': {
+                            50: '#fef2f2',
+                            500: '#ef4444',
+                        },
+                        'yellow': {
+                            500: '#f59e0b',
+                        },
+                        'blue': {
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
 
-const TanieluFamilyStory = () => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [showLogin, setShowLogin] = useState(true);
-  const [showSignup, setShowSignup] = useState(false);
-  const [photos, setPhotos] = useState([]);
-  const [filteredPhotos, setFilteredPhotos] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('timeline');
-  const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [showUpload, setShowUpload] = useState(false);
-  const [familyMembers, setFamilyMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Family relationships
-  const relationshipTypes = [
-    'Mum', 'Dad', 'Son', 'Daughter', 'Brother', 'Sister',
-    'Grandma', 'Grandpa', 'Grandson', 'Granddaughter',
-    'Uncle', 'Aunty', 'Nephew', 'Niece', 'Cousin'
-  ];
-
-  // Load data
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const [membersResult, photosResult] = await Promise.all([
-        window.storage.get('tanielu-members'),
-        window.storage.get('tanielu-photos')
-      ]);
-
-      if (membersResult?.value) {
-        setFamilyMembers(JSON.parse(membersResult.value));
-      } else {
-        // Initialize with demo accounts
-        const demoMembers = [
-          { id: '1', email: 'john@tanielu.family', password: 'demo123', name: 'John Tanielu', relationship: 'Dad', avatar: '👨', joinedDate: '2024-01-01', storiesShared: 12, heartPoints: 45 },
-          { id: '2', email: 'mary@tanielu.family', password: 'demo123', name: 'Mary Tanielu', relationship: 'Mum', avatar: '👩', joinedDate: '2024-01-01', storiesShared: 18, heartPoints: 62 },
-          { id: '3', email: 'sarah@tanielu.family', password: 'demo123', name: 'Sarah Tanielu', relationship: 'Daughter', avatar: '👧', joinedDate: '2024-01-15', storiesShared: 8, heartPoints: 28 }
-        ];
-        await window.storage.set('tanielu-members', JSON.stringify(demoMembers));
-        setFamilyMembers(demoMembers);
-      }
-
-      if (photosResult?.value) {
-        const loadedPhotos = JSON.parse(photosResult.value);
-        setPhotos(loadedPhotos);
-        setFilteredPhotos(loadedPhotos);
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const savePhotos = async (newPhotos) => {
-    try {
-      await window.storage.set('tanielu-photos', JSON.stringify(newPhotos));
-      setPhotos(newPhotos);
-      setFilteredPhotos(newPhotos);
-    } catch (error) {
-      console.error('Error saving photos:', error);
-      alert('Failed to save photos');
-    }
-  };
-
-  const saveFamilyMembers = async (members) => {
-    try {
-      await window.storage.set('tanielu-members', JSON.stringify(members));
-      setFamilyMembers(members);
-    } catch (error) {
-      console.error('Error saving family members:', error);
-    }
-  };
-
-  // Authentication
-  const handleLogin = (email, password) => {
-    const member = familyMembers.find(m => m.email === email && m.password === password);
-    if (member) {
-      setCurrentUser(member);
-      setShowLogin(false);
-    } else {
-      alert('Invalid email or password');
-    }
-  };
-
-  const handleSignup = async (signupData) => {
-    const newMember = {
-      id: Date.now().toString(),
-      email: signupData.email,
-      password: signupData.password,
-      name: signupData.name,
-      relationship: signupData.relationship,
-      avatar: signupData.avatar,
-      joinedDate: new Date().toISOString().split('T')[0],
-      storiesShared: 0,
-      heartPoints: 0
-    };
-
-    const updatedMembers = [...familyMembers, newMember];
-    await saveFamilyMembers(updatedMembers);
-    setCurrentUser(newMember);
-    setShowSignup(false);
-    setShowLogin(false);
-  };
-
-  // Photo management
-  const handlePhotoUpload = async (photoData) => {
-    const newPhoto = {
-      id: Date.now().toString(),
-      ...photoData,
-      uploadedBy: currentUser.id,
-      uploadedByName: currentUser.name,
-      uploadDate: new Date().toISOString(),
-      loves: [],
-      comments: [],
-      memories: []
-    };
-
-    const updatedPhotos = [...photos, newPhoto].sort((a, b) => 
-      new Date(b.date) - new Date(a.date)
-    );
-    
-    await savePhotos(updatedPhotos);
-
-    // Update user stats
-    const updatedMembers = familyMembers.map(m => 
-      m.id === currentUser.id 
-        ? { ...m, storiesShared: m.storiesShared + 1, heartPoints: m.heartPoints + 5 }
-        : m
-    );
-    await saveFamilyMembers(updatedMembers);
-    setCurrentUser(updatedMembers.find(m => m.id === currentUser.id));
-
-    setShowUpload(false);
-  };
-
-  const handleLovePhoto = async (photoId) => {
-    const updatedPhotos = photos.map(photo => {
-      if (photo.id === photoId) {
-        const loves = photo.loves || [];
-        const hasLoved = loves.includes(currentUser.id);
-        return {
-          ...photo,
-          loves: hasLoved 
-            ? loves.filter(id => id !== currentUser.id)
-            : [...loves, currentUser.id]
+    <script type="text/babel">
+        // 4. Simulated window.storage for persistence (uses localStorage)
+        window.storage = {
+            get: async (key) => {
+                const value = localStorage.getItem(key);
+                return value ? { value } : null;
+            },
+            set: async (key, value) => {
+                localStorage.setItem(key, value);
+            }
         };
-      }
-      return photo;
-    });
 
-    await savePhotos(updatedPhotos);
-    if (selectedPhoto?.id === photoId) {
-      setSelectedPhoto(updatedPhotos.find(p => p.id === photoId));
-    }
-  };
+        // Utility components (from lucide-react, simulated with SVGs/placeholders for CDNs)
+        const Icon = ({ name, className = "w-5 h-5", children, ...props }) => {
+            // A simple placeholder for Lucide icons
+            const iconStyles = {
+                Upload: 'text-purple-600', Search: 'text-gray-400', Grid: 'text-purple-700', List: 'text-purple-700',
+                Calendar: 'text-purple-600', MapPin: 'text-purple-600', Tag: 'text-gray-600', Users: 'text-gray-600',
+                Heart: 'text-red-500', MessageCircle: 'text-blue-500', Star: 'text-yellow-500', Award: 'text-yellow-500'
+            };
+            const defaultClass = iconStyles[name] || 'text-gray-600';
 
-  const handleAddComment = async (photoId, comment) => {
-    const updatedPhotos = photos.map(photo => {
-      if (photo.id === photoId) {
-        return {
-          ...photo,
-          comments: [...(photo.comments || []), {
-            id: Date.now().toString(),
-            userId: currentUser.id,
-            userName: currentUser.name,
-            userAvatar: currentUser.avatar,
-            text: comment,
-            date: new Date().toISOString()
-          }]
+            // Placeholder structure for icons
+            return (
+                <svg className={`${className} ${defaultClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+                    <circle cx="12" cy="12" r="10" />
+                    {children}
+                </svg>
+            );
         };
-      }
-      return photo;
-    });
+        
+        // --- Icon Mappings (simulating lucide-react imports) ---
+        // Note: For a proper deployment, you'd use a bundler to include actual lucide-react SVGs.
+        // For this single-file demo, we use the Icon component wrapper.
+        const Upload = (props) => <Icon name="Upload" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></Icon>;
+        const Search = (props) => <Icon name="Search" {...props}><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></Icon>;
+        const Grid = (props) => <Icon name="Grid" {...props}><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="11" x2="21" y2="11" /><line x1="11" y1="3" x2="11" y2="21" /></Icon>;
+        const List = (props) => <Icon name="List" {...props}><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></Icon>;
+        const Calendar = (props) => <Icon name="Calendar" {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></Icon>;
+        const MapPin = (props) => <Icon name="MapPin" {...props}><path d="M12 1v22h-.01c-6.09 0-11-4.91-11-11S5.91 1 12 1z"/><circle cx="12" cy="12" r="3" /></Icon>;
+        const Tag = (props) => <Icon name="Tag" {...props}><path d="M19 19H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/><line x1="10" y1="15" x2="10" y2="9"/></Icon>;
+        const Users = (props) => <Icon name="Users" {...props}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
+        const Heart = (props) => <Icon name="Heart" {...props}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></Icon>;
+        const MessageCircle = (props) => <Icon name="MessageCircle" {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></Icon>;
+        const Star = (props) => <Icon name="Star" {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></Icon>;
+        const Award = (props) => <Icon name="Award" {...props}><circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.89" /></Icon>;
 
-    await savePhotos(updatedPhotos);
-    if (selectedPhoto?.id === photoId) {
-      setSelectedPhoto(updatedPhotos.find(p => p.id === photoId));
-    }
-  };
 
-  // Search
-  useEffect(() => {
-    if (searchTerm) {
-      const filtered = photos.filter(photo =>
-        photo.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        photo.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        photo.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        photo.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      setFilteredPhotos(filtered);
-    } else {
-      setFilteredPhotos(photos);
-    }
-  }, [searchTerm, photos]);
+        // Get React Hooks
+        const { useState, useEffect } = React;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🏠</div>
-          <div className="text-2xl font-bold text-purple-900">Loading Tanielu Family Story...</div>
-        </div>
-      </div>
-    );
-  }
+        // Auth Screen Component
+        const AuthScreen = ({ showSignup, setShowSignup, onLogin, onSignup, relationshipTypes }) => {
+            const [formData, setFormData] = useState({
+                email: '',
+                password: '',
+                name: '',
+                relationship: '',
+                avatar: '👤'
+            });
 
-  if (showLogin || showSignup) {
-    return <AuthScreen 
-      showSignup={showSignup}
-      setShowSignup={setShowSignup}
-      onLogin={handleLogin}
-      onSignup={handleSignup}
-      relationshipTypes={relationshipTypes}
-    />;
-  }
+            const avatarOptions = ['👨', '👩', '👦', '👧', '👴', '👵', '👶', '🧑', '👨‍🦳', '👩‍🦳'];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="text-4xl">🏠</div>
-              <div>
-                <h1 className="text-2xl font-bold text-purple-900">Tanielu Family Story</h1>
-                <p className="text-sm text-gray-600">Our memories, our legacy</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{currentUser.avatar}</span>
-                  <div>
-                    <div className="font-semibold text-purple-900">{currentUser.name}</div>
-                    <div className="text-xs text-gray-600">{currentUser.relationship}</div>
-                  </div>
-                </div>
-                <div className="flex gap-3 mt-1 text-xs">
-                  <span className="flex items-center gap-1">
-                    <Star className="w-3 h-3 text-yellow-500" />
-                    {currentUser.storiesShared} stories
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Heart className="w-3 h-3 text-red-500" />
-                    {currentUser.heartPoints} points
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowLogin(true)}
-                className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Switch Account
-              </button>
-            </div>
-          </div>
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (showSignup) {
+                    if (!formData.name || !formData.email || !formData.password || !formData.relationship) {
+                        alert('Please fill in all fields');
+                        return;
+                    }
+                    onSignup(formData);
+                } else {
+                    onLogin(formData.email, formData.password);
+                }
+            };
 
-          <div className="flex items-center gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search memories, locations, tags..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
-              />
-            </div>
-            <button
-              onClick={() => setViewMode(viewMode === 'timeline' ? 'grid' : 'timeline')}
-              className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
-            >
-              {viewMode === 'timeline' ? <Grid className="w-5 h-5" /> : <List className="w-5 h-5" />}
-            </button>
-            <button
-              onClick={() => setShowUpload(true)}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
-            >
-              <Upload className="w-5 h-5" />
-              Share Memory
-            </button>
-          </div>
-        </div>
-      </header>
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+                        <div className="text-center mb-8">
+                            <div className="text-6xl mb-4">🏠</div>
+                            <h1 className="text-3xl font-bold text-purple-900 mb-2">Tanielu Family Story</h1>
+                            <p className="text-gray-600">Preserving memories, building legacy</p>
+                        </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Family Stats Bar */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-purple-900 mb-2">Family Timeline</h3>
-              <p className="text-gray-600">{photos.length} precious memories preserved</p>
-            </div>
-            <div className="flex gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600">{familyMembers.length}</div>
-                <div className="text-sm text-gray-600">Family Members</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-pink-600">{photos.reduce((sum, p) => sum + (p.loves?.length || 0), 0)}</div>
-                <div className="text-sm text-gray-600">Total Loves</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{photos.reduce((sum, p) => sum + (p.comments?.length || 0), 0)}</div>
-                <div className="text-sm text-gray-600">Comments</div>
-              </div>
-            </div>
-          </div>
-        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {showSignup && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                            placeholder="John Tanielu"
+                                            required
+                                        />
+                                    </div>
 
-        {/* Photos Display */}
-        {filteredPhotos.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center">
-            <div className="text-6xl mb-4">📸</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No memories yet</h3>
-            <p className="text-gray-600 mb-6">Start sharing your family stories and create your legacy</p>
-            <button
-              onClick={() => setShowUpload(true)}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-            >
-              Share Your First Memory
-            </button>
-          </div>
-        ) : viewMode === 'timeline' ? (
-          <div className="space-y-6">
-            {filteredPhotos.map(photo => (
-              <PhotoTimelineCard
-                key={photo.id}
-                photo={photo}
-                familyMembers={familyMembers}
-                currentUser={currentUser}
-                onLove={handleLovePhoto}
-                onClick={() => setSelectedPhoto(photo)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPhotos.map(photo => (
-              <PhotoGridCard
-                key={photo.id}
-                photo={photo}
-                onClick={() => setSelectedPhoto(photo)}
-              />
-            ))}
-          </div>
-        )}
-      </main>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Your Relationship</label>
+                                        <select
+                                            value={formData.relationship}
+                                            onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                            required
+                                        >
+                                            <option value="">Select your role in the family</option>
+                                            {relationshipTypes.map(type => (
+                                                <option key={type} value={type}>{type}</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-      {/* Modals */}
-      {showUpload && (
-        <UploadModal
-          familyMembers={familyMembers}
-          currentUser={currentUser}
-          onClose={() => setShowUpload(false)}
-          onUpload={handlePhotoUpload}
-        />
-      )}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Choose Your Avatar</label>
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {avatarOptions.map(avatar => (
+                                                <button
+                                                    key={avatar}
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, avatar })}
+                                                    className={`text-3xl p-2 rounded-lg border-2 ${
+                                                        formData.avatar === avatar ? 'border-purple-600 bg-purple-50' : 'border-gray-200'
+                                                    }`}
+                                                >
+                                                    {avatar}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
 
-      {selectedPhoto && (
-        <PhotoDetailModal
-          photo={selectedPhoto}
-          familyMembers={familyMembers}
-          currentUser={currentUser}
-          onClose={() => setSelectedPhoto(null)}
-          onLove={handleLovePhoto}
-          onComment={handleAddComment}
-        />
-      )}
-    </div>
-  );
-};
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                    placeholder="your.email@tanielu.family"
+                                    required
+                                />
+                            </div>
 
-// Auth Screen Component
-const AuthScreen = ({ showSignup, setShowSignup, onLogin, onSignup, relationshipTypes }) => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: '',
-    relationship: '',
-    avatar: '👤'
-  });
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
 
-  const avatarOptions = ['👨', '👩', '👦', '👧', '👴', '👵', '👶', '🧑', '👨‍🦳', '👩‍🦳'];
+                            <button
+                                type="submit"
+                                className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                            >
+                                {showSignup ? 'Join Family' : 'Login'}
+                            </button>
+                        </form>
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (showSignup) {
-      if (!formData.name || !formData.email || !formData.password || !formData.relationship) {
-        alert('Please fill in all fields');
-        return;
-      }
-      onSignup(formData);
-    } else {
-      onLogin(formData.email, formData.password);
-    }
-  };
+                        <div className="mt-6 text-center">
+                            <button
+                                onClick={() => {
+                                    setShowSignup(!showSignup);
+                                    setFormData({ email: '', password: '', name: '', relationship: '', avatar: '👤' });
+                                }}
+                                className="text-purple-600 hover:text-purple-700 text-sm"
+                            >
+                                {showSignup ? 'Already have an account? Login' : 'New to the family? Sign up'}
+                            </button>
+                        </div>
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🏠</div>
-          <h1 className="text-3xl font-bold text-purple-900 mb-2">Tanielu Family Story</h1>
-          <p className="text-gray-600">Preserving memories, building legacy</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {showSignup && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  placeholder="John Tanielu"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Your Relationship</label>
-                <select
-                  value={formData.relationship}
-                  onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  required
-                >
-                  <option value="">Select your role in the family</option>
-                  {relationshipTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Choose Your Avatar</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {avatarOptions.map(avatar => (
-                    <button
-                      key={avatar}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, avatar })}
-                      className={`text-3xl p-2 rounded-lg border-2 ${
-                        formData.avatar === avatar ? 'border-purple-600 bg-purple-50' : 'border-gray-200'
-                      }`}
-                    >
-                      {avatar}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              placeholder="your.email@tanielu.family"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
-          >
-            {showSignup ? 'Join Family' : 'Login'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => {
-              setShowSignup(!showSignup);
-              setFormData({ email: '', password: '', name: '', relationship: '', avatar: '👤' });
-            }}
-            className="text-purple-600 hover:text-purple-700 text-sm"
-          >
-            {showSignup ? 'Already have an account? Login' : 'New to the family? Sign up'}
-          </button>
-        </div>
-
-        {!showSignup && (
-          <div className="mt-6 p-4 bg-purple-50 rounded-lg">
-            <p className="text-sm text-gray-700 mb-2 font-medium">Demo Accounts:</p>
-            <p className="text-xs text-gray-600">john@tanielu.family / demo123</p>
-            <p className="text-xs text-gray-600">mary@tanielu.family / demo123</p>
-            <p className="text-xs text-gray-600">sarah@tanielu.family / demo123</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Photo Timeline Card
-const PhotoTimelineCard = ({ photo, familyMembers, currentUser, onLove, onClick }) => {
-  const uploader = familyMembers.find(m => m.id === photo.uploadedBy);
-  const hasLoved = photo.loves?.includes(currentUser.id);
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-      <div className="p-4 border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{uploader?.avatar}</span>
-            <div>
-              <div className="font-semibold text-gray-900">{photo.uploadedByName}</div>
-              <div className="text-sm text-gray-600">{new Date(photo.uploadDate).toLocaleDateString()}</div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm font-medium text-purple-600">{photo.date}</div>
-            {photo.location && (
-              <div className="text-xs text-gray-600 flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {photo.location}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div 
-        className="cursor-pointer"
-        onClick={onClick}
-      >
-        <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-          <div className="text-center p-8">
-            <div className="text-6xl mb-4">📸</div>
-            <div className="text-xl font-bold text-purple-900">{photo.title}</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-4">
-        <p className="text-gray-700 mb-3">{photo.description}</p>
-
-        {photo.tags && photo.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {photo.tags.map((tag, idx) => (
-              <span key={idx} className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center gap-4 pt-3 border-t">
-          <button
-            onClick={() => onLove(photo.id)}
-            className={`flex items-center gap-2 ${hasLoved ? 'text-red-500' : 'text-gray-600'} hover:text-red-500`}
-          >
-            <Heart className={`w-5 h-5 ${hasLoved ? 'fill-current' : ''}`} />
-            <span className="text-sm font-medium">{photo.loves?.length || 0}</span>
-          </button>
-          <button className="flex items-center gap-2 text-gray-600 hover:text-blue-500">
-            <MessageCircle className="w-5 h-5" />
-            <span className="text-sm font-medium">{photo.comments?.length || 0}</span>
-          </button>
-          {photo.peopleTagged && photo.peopleTagged.length > 0 && (
-            <div className="flex items-center gap-2 text-gray-600 ml-auto">
-              <Users className="w-4 h-4" />
-              <span className="text-sm">{photo.peopleTagged.length} people</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Photo Grid Card
-const PhotoGridCard = ({ photo, onClick }) => {
-  return (
-    <div 
-      onClick={onClick}
-      className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-    >
-      <div className="aspect-square bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-        <div className="text-center p-4">
-          <div className="text-4xl mb-2">📸</div>
-          <div className="font-semibold text-gray-900 text-sm">{photo.title}</div>
-        </div>
-      </div>
-      <div className="p-3">
-        <div className="text-sm text-gray-600 mb-1">{photo.date}</div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <Heart className="w-3 h-3" />
-          <span>{photo.loves?.length || 0}</span>
-          <MessageCircle className="w-3 h-3 ml-2" />
-          <span>{photo.comments?.length || 0}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Upload Modal
-const UploadModal = ({ familyMembers, currentUser, onClose, onUpload }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    date: new Date().toISOString().split('T')[0],
-    location: '',
-    tags: '',
-    peopleTagged: []
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onUpload({
-      ...formData,
-      tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b sticky top-0 bg-white">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-purple-900">Share a Memory</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl p-8 text-center">
-            <Upload className="w-12 h-12 mx-auto mb-3 text-purple-600" />
-            <p className="text-gray-700">Photo upload coming soon!</p>
-            <p className="text-sm text-gray-600 mt-1">For now, add details about your memory</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Memory Title *</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              placeholder="Summer vacation at the beach"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Story & Details *</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg h-32"
-              placeholder="Tell the story behind this memory..."
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                placeholder="Where was this?"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Who's in this memory?</label>
-            <div className="grid grid-cols-2 gap-2">
-              {familyMembers.map(member => (
-                <label key={member.id} className="flex items-center gap-2 p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-purple-50">
-                  <input
-                    type="checkbox"
-                    checked={formData.peopleTagged.includes(member.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData({ ...formData, peopleTagged: [...formData.peopleTagged, member.id] });
-                      } else {
-                        setFormData({ ...formData, peopleTagged: formData.peopleTagged.filter(id => id !== member.id) });
-                      }
-                    }}
-                    className="rounded"
-                  />
-                  <span className="text-xl">{member.avatar}</span>
-                  <span className="text-sm">{member.name}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-            <input
-              type="text"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              placeholder="vacation, family, celebration (comma separated)"
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-            >
-              Share Memory
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// Photo Detail Modal
-const PhotoDetailModal = ({ photo, familyMembers, currentUser, onClose, onLove, onComment }) => {
-  const [commentText, setCommentText] = useState('');
-  const uploader = familyMembers.find(m => m.id === photo.uploadedBy);
-  const hasLoved = photo.loves?.includes(currentUser.id);
-
-  const handleSubmitComment = (e) => {
-    e.preventDefault();
-    if (commentText.trim()) {
-      onComment(photo.id, commentText);
-      setCommentText('');
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b sticky top-0 bg-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{uploader?.avatar}</span>
-              <div>
-                <div className="font-semibold text-gray-900">{photo.uploadedByName}</div>
-                <div className="text-sm text-gray-600">{new Date(photo.uploadDate).toLocaleDateString()}</div>
-              </div>
-            </div>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-          </div>
-        </div>
-
-        <div className="p-6">
-          {/* Photo */}
-          <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center mb-6">
-            <div className="text-center p-8">
-              <div className="text-8xl mb-4">📸</div>
-              <div className="text-2xl font-bold text-purple-900">{photo.title}</div>
-            </div>
-          </div>
-
-          {/* Details */}
-          <div className="space-y-4 mb-6">
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{photo.title}</h3>
-              <p className="text-gray-700">{photo.description}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 py-4 border-t border-b">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-purple-600" />
-                <div>
-                  <div className="text-xs text-gray-600">Date</div>
-                  <div className="font-medium">{photo.date}</div>
-                </div>
-              </div>
-              {photo.location && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-purple-600" />
-                  <div>
-                    <div className="text-xs text-gray-600">Location</div>
-                    <div className="font-medium">{photo.location}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {photo.peopleTagged && photo.peopleTagged.length > 0 && (
-              <div>
-                <div className="text-sm font-medium text-gray-700 mb-2">People in this memory</div>
-                <div className="flex flex-wrap gap-2">
-                  {photo.peopleTagged.map(memberId => {
-                    const member = familyMembers.find(m => m.id === memberId);
-                    return member ? (
-                      <div key={memberId} className="flex items-center gap-2 px-3 py-1 bg-purple-100 rounded-full">
-                        <span className="text-lg">{member.avatar}</span>
-                        <span className="text-sm font-medium text-purple-900">{member.name}</span>
-                      </div>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            )}
-
-            {photo.tags && photo.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {photo.tags.map((tag, idx) => (
-                  <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Interactions */}
-          <div className="border-t pt-4 mb-6">
-            <div className="flex items-center gap-6 mb-4">
-              <button
-                onClick={() => onLove(photo.id)}
-                className={`flex items-center gap-2 ${hasLoved ? 'text-red-500' : 'text-gray-600'} hover:text-red-500`}
-              >
-                <Heart className={`w-6 h-6 ${hasLoved ? 'fill-current' : ''}`} />
-                <span className="font-medium">{photo.loves?.length || 0} Loves</span>
-              </button>
-              <div className="flex items-center gap-2 text-gray-600">
-                <MessageCircle className="w-6 h-6" />
-                <span className="font-medium">{photo.comments?.length || 0} Comments</span>
-              </div>
-            </div>
-
-            {/* Loved by */}
-            {photo.loves && photo.loves.length > 0 && (
-              <div className="mb-4 p-3 bg-red-50 rounded-lg">
-                <div className="text-sm text-gray-700">
-                  Loved by:{' '}
-                  {photo.loves.map(userId => {
-                    const member = familyMembers.find(m => m.id === userId);
-                    return member ? member.name : 'Someone';
-                  }).join(', ')}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Comments Section */}
-          <div className="border-t pt-6">
-            <h4 className="font-bold text-gray-900 mb-4">Comments</h4>
-            
-            {/* Comment Form */}
-            <form onSubmit={handleSubmitComment} className="mb-6">
-              <div className="flex gap-3">
-                <span className="text-2xl">{currentUser.avatar}</span>
-                <div className="flex-1">
-                  <textarea
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    placeholder="Share your thoughts about this memory..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg resize-none"
-                    rows="3"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!commentText.trim()}
-                    className="mt-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  >
-                    Post Comment
-                  </button>
-                </div>
-              </div>
-            </form>
-
-            {/* Comments List */}
-            <div className="space-y-4">
-              {photo.comments && photo.comments.length > 0 ? (
-                photo.comments.map(comment => (
-                  <div key={comment.id} className="flex gap-3">
-                    <span className="text-2xl">{comment.userAvatar}</span>
-                    <div className="flex-1 bg-gray-50 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-gray-900">{comment.userName}</span>
-                        <span className="text-xs text-gray-600">
-                          {new Date(comment.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-gray-700">{comment.text}</p>
+                        {!showSignup && (
+                            <div className="mt-6 p-4 bg-purple-50 rounded-lg">
+                                <p className="text-sm text-gray-700 mb-2 font-medium">Demo Accounts:</p>
+                                <p className="text-xs text-gray-600">john@tanielu.family / demo123</p>
+                                <p className="text-xs text-gray-600">mary@tanielu.family / demo123</p>
+                                <p className="text-xs text-gray-600">sarah@tanielu.family / demo123</p>
+                            </div>
+                        )}
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p>No comments yet. Be the first to share your thoughts!</p>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+            );
+        };
 
-export default TanieluFamilyStory;
+        // Photo Timeline Card
+        const PhotoTimelineCard = ({ photo, familyMembers, currentUser, onLove, onClick }) => {
+            const uploader = familyMembers.find(m => m.id === photo.uploadedBy);
+            const hasLoved = photo.loves?.includes(currentUser.id);
+
+            return (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="p-4 border-b">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl">{uploader?.avatar}</span>
+                                <div>
+                                    <div className="font-semibold text-gray-900">{photo.uploadedByName}</div>
+                                    <div className="text-sm text-gray-600">{new Date(photo.uploadDate).toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-sm font-medium text-purple-600">{photo.date}</div>
+                                {photo.location && (
+                                    <div className="text-xs text-gray-600 flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        {photo.location}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div 
+                        className="cursor-pointer"
+                        onClick={onClick}
+                    >
+                        <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                            <div className="text-center p-8">
+                                <div className="text-6xl mb-4">📸</div>
+                                <div className="text-xl font-bold text-purple-900">{photo.title}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-4">
+                        <p className="text-gray-700 mb-3">{photo.description}</p>
+
+                        {photo.tags && photo.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                {photo.tags.map((tag, idx) => (
+                                    <span key={idx} className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                                        #{tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-4 pt-3 border-t">
+                            <button
+                                onClick={() => onLove(photo.id)}
+                                className={`flex items-center gap-2 ${hasLoved ? 'text-red-500' : 'text-gray-600'} hover:text-red-500`}
+                            >
+                                <Heart className={`w-5 h-5 ${hasLoved ? 'fill-current' : ''}`} />
+                                <span className="text-sm font-medium">{photo.loves?.length || 0}</span>
+                            </button>
+                            <button className="flex items-center gap-2 text-gray-600 hover:text-blue-500">
+                                <MessageCircle className="w-5 h-5" />
+                                <span className="text-sm font-medium">{photo.comments?.length || 0}</span>
+                            </button>
+                            {photo.peopleTagged && photo.peopleTagged.length > 0 && (
+                                <div className="flex items-center gap-2 text-gray-600 ml-auto">
+                                    <Users className="w-4 h-4" />
+                                    <span className="text-sm">{photo.peopleTagged.length} people</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Photo Grid Card
+        const PhotoGridCard = ({ photo, onClick }) => {
+            return (
+                <div 
+                    onClick={onClick}
+                    className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                >
+                    <div className="aspect-square bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                        <div className="text-center p-4">
+                            <div className="text-4xl mb-2">📸</div>
+                            <div className="font-semibold text-gray-900 text-sm">{photo.title}</div>
+                        </div>
+                    </div>
+                    <div className="p-3">
+                        <div className="text-sm text-gray-600 mb-1">{photo.date}</div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Heart className="w-3 h-3" />
+                            <span>{photo.loves?.length || 0}</span>
+                            <MessageCircle className="w-3 h-3 ml-2" />
+                            <span>{photo.comments?.length || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Upload Modal
+        const UploadModal = ({ familyMembers, currentUser, onClose, onUpload }) => {
+            const [formData, setFormData] = useState({
+                title: '',
+                description: '',
+                date: new Date().toISOString().split('T')[0],
+                location: '',
+                tags: '',
+                peopleTagged: []
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onUpload({
+                    ...formData,
+                    tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
+                });
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b sticky top-0 bg-white">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-2xl font-bold text-purple-900">Share a Memory</h2>
+                                <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl p-8 text-center">
+                                <Upload className="w-12 h-12 mx-auto mb-3 text-purple-600" />
+                                <p className="text-gray-700">Photo upload coming soon!</p>
+                                <p className="text-sm text-gray-600 mt-1">For now, add details about your memory</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Memory Title *</label>
+                                <input
+                                    type="text"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                    placeholder="Summer vacation at the beach"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Story & Details *</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg h-32"
+                                    placeholder="Tell the story behind this memory..."
+                                    required
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                                    <input
+                                        type="date"
+                                        value={formData.date}
+                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                                    <input
+                                        type="text"
+                                        value={formData.location}
+                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                        placeholder="Where was this?"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Who's in this memory?</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {familyMembers.map(member => (
+                                        <label key={member.id} className="flex items-center gap-2 p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-purple-50">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.peopleTagged.includes(member.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setFormData({ ...formData, peopleTagged: [...formData.peopleTagged, member.id] });
+                                                    } else {
+                                                        setFormData({ ...formData, peopleTagged: formData.peopleTagged.filter(id => id !== member.id) });
+                                                    }
+                                                }}
+                                                className="rounded"
+                                            />
+                                            <span className="text-xl">{member.avatar}</span>
+                                            <span className="text-sm">{member.name}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                                <input
+                                    type="text"
+                                    value={formData.tags}
+                                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                    placeholder="vacation, family, celebration (comma separated)"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                                >
+                                    Share Memory
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // Photo Detail Modal
+        const PhotoDetailModal = ({ photo, familyMembers, currentUser, onClose, onLove, onComment }) => {
+            const [commentText, setCommentText] = useState('');
+            const uploader = familyMembers.find(m => m.id === photo.uploadedBy);
+            const hasLoved = photo.loves?.includes(currentUser.id);
+
+            const handleSubmitComment = (e) => {
+                e.preventDefault();
+                if (commentText.trim()) {
+                    onComment(photo.id, commentText);
+                    setCommentText('');
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b sticky top-0 bg-white">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-2xl">{uploader?.avatar}</span>
+                                    <div>
+                                        <div className="font-semibold text-gray-900">{photo.uploadedByName}</div>
+                                        <div className="text-sm text-gray-600">{new Date(photo.uploadDate).toLocaleDateString()}</div>
+                                    </div>
+                                </div>
+                                <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                            </div>
+                        </div>
+
+                        <div className="p-6">
+                            {/* Photo */}
+                            <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center mb-6">
+                                <div className="text-center p-8">
+                                    <div className="text-8xl mb-4">📸</div>
+                                    <div className="text-2xl font-bold text-purple-900">{photo.title}</div>
+                                </div>
+                            </div>
+
+                            {/* Details */}
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">{photo.title}</h3>
+                                    <p className="text-gray-700">{photo.description}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 py-4 border-t border-b">
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="w-5 h-5 text-purple-600" />
+                                        <div>
+                                            <div className="text-xs text-gray-600">Date</div>
+                                            <div className="font-medium">{photo.date}</div>
+                                        </div>
+                                    </div>
+                                    {photo.location && (
+                                        <div className="flex items-center gap-2">
+                                            <MapPin className="w-5 h-5 text-purple-600" />
+                                            <div>
+                                                <div className="text-xs text-gray-600">Location</div>
+                                                <div className="font-medium">{photo.location}</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {photo.peopleTagged && photo.peopleTagged.length > 0 && (
+                                    <div>
+                                        <div className="text-sm font-medium text-gray-700 mb-2">People in this memory</div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {photo.peopleTagged.map(memberId => {
+                                                const member = familyMembers.find(m => m.id === memberId);
+                                                return member ? (
+                                                    <div key={memberId} className="flex items-center gap-2 px-3 py-1 bg-purple-100 rounded-full">
+                                                        <span className="text-lg">{member.avatar}</span>
+                                                        <span className="text-sm font-medium text-purple-900">{member.name}</span>
+                                                    </div>
+                                                ) : null;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {photo.tags && photo.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {photo.tags.map((tag, idx) => (
+                                            <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Interactions */}
+                            <div className="border-t pt-4 mb-6">
+                                <div className="flex items-center gap-6 mb-4">
+                                    <button
+                                        onClick={() => onLove(photo.id)}
+                                        className={`flex items-center gap-2 ${hasLoved ? 'text-red-500' : 'text-gray-600'} hover:text-red-500`}
+                                    >
+                                        <Heart className={`w-6 h-6 ${hasLoved ? 'fill-current' : ''}`} />
+                                        <span className="font-medium">{photo.loves?.length || 0} Loves</span>
+                                    </button>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                        <MessageCircle className="w-6 h-6" />
+                                        <span className="font-medium">{photo.comments?.length || 0} Comments</span>
+                                    </div>
+                                </div>
+
+                                {/* Loved by */}
+                                {photo.loves && photo.loves.length > 0 && (
+                                    <div className="mb-4 p-3 bg-red-50 rounded-lg">
+                                        <div className="text-sm text-gray-700">
+                                            Loved by:{' '}
+                                            {photo.loves.map(userId => {
+                                                const member = familyMembers.find(m => m.id === userId);
+                                                return member ? member.name : 'Someone';
+                                            }).join(', ')}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Comments Section */}
+                            <div className="border-t pt-6">
+                                <h4 className="font-bold text-gray-900 mb-4">Comments</h4>
+                                
+                                {/* Comment Form */}
+                                <form onSubmit={handleSubmitComment} className="mb-6">
+                                    <div className="flex gap-3">
+                                        <span className="text-2xl">{currentUser.avatar}</span>
+                                        <div className="flex-1">
+                                            <textarea
+                                                value={commentText}
+                                                onChange={(e) => setCommentText(e.target.value)}
+                                                placeholder="Share your thoughts about this memory..."
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg resize-none"
+                                                rows="3"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={!commentText.trim()}
+                                                className="mt-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                            >
+                                                Post Comment
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                {/* Comments List */}
+                                <div className="space-y-4">
+                                    {photo.comments && photo.comments.length > 0 ? (
+                                        photo.comments.map(comment => (
+                                            <div key={comment.id} className="flex gap-3">
+                                                <span className="text-2xl">{comment.userAvatar}</span>
+                                                <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-semibold text-gray-900">{comment.userName}</span>
+                                                        <span className="text-xs text-gray-600">
+                                                            {new Date(comment.date).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-gray-700">{comment.text}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                                            <p>No comments yet. Be the first to share your thoughts!</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Main Component
+        const TanieluFamilyStory = () => {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [showLogin, setShowLogin] = useState(true);
+            const [showSignup, setShowSignup] = useState(false);
+            const [photos, setPhotos] = useState([]);
+            const [filteredPhotos, setFilteredPhotos] = useState([]);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [viewMode, setViewMode] = useState('timeline');
+            const [selectedPhoto, setSelectedPhoto] = useState(null);
+            const [showUpload, setShowUpload] = useState(false);
+            const [familyMembers, setFamilyMembers] = useState([]);
+            const [loading, setLoading] = useState(true);
+
+            // Family relationships
+            const relationshipTypes = [
+                'Mum', 'Dad', 'Son', 'Daughter', 'Brother', 'Sister',
+                'Grandma', 'Grandpa', 'Grandson', 'Granddaughter',
+                'Uncle', 'Aunty', 'Nephew', 'Niece', 'Cousin'
+            ];
+
+            // Load data
+            useEffect(() => {
+                loadData();
+            }, []);
+
+            const loadData = async () => {
+                try {
+                    const [membersResult, photosResult] = await Promise.all([
+                        window.storage.get('tanielu-members'),
+                        window.storage.get('tanielu-photos')
+                    ]);
+
+                    let loadedMembers = [];
+                    if (membersResult?.value) {
+                        loadedMembers = JSON.parse(membersResult.value);
+                    } else {
+                        // Initialize with demo accounts
+                        const demoMembers = [
+                            { id: '1', email: 'john@tanielu.family', password: 'demo123', name: 'John Tanielu', relationship: 'Dad', avatar: '👨', joinedDate: '2024-01-01', storiesShared: 12, heartPoints: 45 },
+                            { id: '2', email: 'mary@tanielu.family', password: 'demo123', name: 'Mary Tanielu', relationship: 'Mum', avatar: '👩', joinedDate: '2024-01-01', storiesShared: 18, heartPoints: 62 },
+                            { id: '3', email: 'sarah@tanielu.family', password: 'demo123', name: 'Sarah Tanielu', relationship: 'Daughter', avatar: '👧', joinedDate: '2024-01-15', storiesShared: 8, heartPoints: 28 }
+                        ];
+                        await window.storage.set('tanielu-members', JSON.stringify(demoMembers));
+                        loadedMembers = demoMembers;
+                    }
+                    setFamilyMembers(loadedMembers);
+
+
+                    if (photosResult?.value) {
+                        const loadedPhotos = JSON.parse(photosResult.value);
+                        setPhotos(loadedPhotos);
+                        setFilteredPhotos(loadedPhotos);
+                    }
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const savePhotos = async (newPhotos) => {
+                try {
+                    await window.storage.set('tanielu-photos', JSON.stringify(newPhotos));
+                    setPhotos(newPhotos);
+                    setFilteredPhotos(newPhotos);
+                } catch (error) {
+                    console.error('Error saving photos:', error);
+                    alert('Failed to save photos');
+                }
+            };
+
+            const saveFamilyMembers = async (members) => {
+                try {
+                    await window.storage.set('tanielu-members', JSON.stringify(members));
+                    setFamilyMembers(members);
+                } catch (error) {
+                    console.error('Error saving family members:', error);
+                }
+            };
+
+            // Authentication
+            const handleLogin = (email, password) => {
+                const member = familyMembers.find(m => m.email === email && m.password === password);
+                if (member) {
+                    setCurrentUser(member);
+                    setShowLogin(false);
+                } else {
+                    alert('Invalid email or password');
+                }
+            };
+
+            const handleSignup = async (signupData) => {
+                const newMember = {
+                    id: Date.now().toString(),
+                    email: signupData.email,
+                    password: signupData.password,
+                    name: signupData.name,
+                    relationship: signupData.relationship,
+                    avatar: signupData.avatar,
+                    joinedDate: new Date().toISOString().split('T')[0],
+                    storiesShared: 0,
+                    heartPoints: 0
+                };
+
+                const updatedMembers = [...familyMembers, newMember];
+                await saveFamilyMembers(updatedMembers);
+                setCurrentUser(newMember);
+                setShowSignup(false);
+                setShowLogin(false);
+            };
+
+            // Photo management
+            const handlePhotoUpload = async (photoData) => {
+                const newPhoto = {
+                    id: Date.now().toString(),
+                    ...photoData,
+                    uploadedBy: currentUser.id,
+                    uploadedByName: currentUser.name,
+                    uploadDate: new Date().toISOString(),
+                    loves: [],
+                    comments: [],
+                    memories: []
+                };
+
+                const updatedPhotos = [...photos, newPhoto].sort((a, b) => 
+                    new Date(b.date) - new Date(a.date)
+                );
+                
+                await savePhotos(updatedPhotos);
+
+                // Update user stats
+                const updatedMembers = familyMembers.map(m => 
+                    m.id === currentUser.id 
+                        ? { ...m, storiesShared: m.storiesShared + 1, heartPoints: m.heartPoints + 5 }
+                        : m
+                );
+                await saveFamilyMembers(updatedMembers);
+                setCurrentUser(updatedMembers.find(m => m.id === currentUser.id));
+
+                setShowUpload(false);
+            };
+
+            const handleLovePhoto = async (photoId) => {
+                const updatedPhotos = photos.map(photo => {
+                    if (photo.id === photoId) {
+                        const loves = photo.loves || [];
+                        const hasLoved = loves.includes(currentUser.id);
+                        return {
+                            ...photo,
+                            loves: hasLoved 
+                                ? loves.filter(id => id !== currentUser.id)
+                                : [...loves, currentUser.id]
+                        };
+                    }
+                    return photo;
+                });
+
+                await savePhotos(updatedPhotos);
+                if (selectedPhoto?.id === photoId) {
+                    setSelectedPhoto(updatedPhotos.find(p => p.id === photoId));
+                }
+            };
+
+            const handleAddComment = async (photoId, comment) => {
+                const updatedPhotos = photos.map(photo => {
+                    if (photo.id === photoId) {
+                        return {
+                            ...photo,
+                            comments: [...(photo.comments || []), {
+                                id: Date.now().toString(),
+                                userId: currentUser.id,
+                                userName: currentUser.name,
+                                userAvatar: currentUser.avatar,
+                                text: comment,
+                                date: new Date().toISOString()
+                            }]
+                        };
+                    }
+                    return photo;
+                });
+
+                await savePhotos(updatedPhotos);
+                if (selectedPhoto?.id === photoId) {
+                    setSelectedPhoto(updatedPhotos.find(p => p.id === photoId));
+                }
+            };
+
+            // Search
+            useEffect(() => {
+                if (searchTerm) {
+                    const filtered = photos.filter(photo =>
+                        photo.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        photo.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        photo.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        photo.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+                    );
+                    setFilteredPhotos(filtered);
+                } else {
+                    setFilteredPhotos(photos);
+                }
+            }, [searchTerm, photos]);
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="text-6xl mb-4">🏠</div>
+                            <div className="text-2xl font-bold text-purple-900">Loading Tanielu Family Story...</div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (showLogin || showSignup) {
+                return <AuthScreen 
+                    showSignup={showSignup}
+                    setShowSignup={setShowSignup}
+                    onLogin={handleLogin}
+                    onSignup={handleSignup}
+                    relationshipTypes={relationshipTypes}
+                />;
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+                    {/* Header */}
+                    <header className="bg-white shadow-sm sticky top-0 z-10">
+                        <div className="max-w-7xl mx-auto px-4 py-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="text-4xl">🏠</div>
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-purple-900">Tanielu Family Story</h1>
+                                        <p className="text-sm text-gray-600">Our memories, our legacy</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="text-right">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl">{currentUser.avatar}</span>
+                                            <div>
+                                                <div className="font-semibold text-purple-900">{currentUser.name}</div>
+                                                <div className="text-xs text-gray-600">{currentUser.relationship}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3 mt-1 text-xs">
+                                            <span className="flex items-center gap-1">
+                                                <Star className="w-3 h-3 text-yellow-500" />
+                                                {currentUser.storiesShared} stories
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <Heart className="w-3 h-3 text-red-500" />
+                                                {currentUser.heartPoints} points
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowLogin(true)}
+                                        className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                                    >
+                                        Switch Account
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search memories, locations, tags..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => setViewMode(viewMode === 'timeline' ? 'grid' : 'timeline')}
+                                    className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+                                >
+                                    {viewMode === 'timeline' ? <Grid className="w-5 h-5" /> : <List className="w-5 h-5" />}
+                                </button>
+                                <button
+                                    onClick={() => setShowUpload(true)}
+                                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+                                >
+                                    <Upload className="w-5 h-5" />
+                                    Share Memory
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="max-w-7xl mx-auto px-4 py-8">
+                        {/* Family Stats Bar */}
+                        <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-bold text-purple-900 mb-2">Family Timeline</h3>
+                                    <p className="text-gray-600">{photos.length} precious memories preserved</p>
+                                </div>
+                                <div className="flex gap-6">
+                                    <div className="text-center">
+                                        <div className="text-3xl font-bold text-purple-600">{familyMembers.length}</div>
+                                        <div className="text-sm text-gray-600">Family Members</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-3xl font-bold text-pink-600">{photos.reduce((sum, p) => sum + (p.loves?.length || 0), 0)}</div>
+                                        <div className="text-sm text-gray-600">Total Loves</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-3xl font-bold text-blue-600">{photos.reduce((sum, p) => sum + (p.comments?.length || 0), 0)}</div>
+                                        <div className="text-sm text-gray-600">Comments</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Photos Display */}
+                        {filteredPhotos.length === 0 ? (
+                            <div className="bg-white rounded-xl p-12 text-center">
+                                <div className="text-6xl mb-4">📸</div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">No memories yet</h3>
+                                <p className="text-gray-600 mb-6">Start sharing your family stories and create your legacy</p>
+                                <button
+                                    onClick={() => setShowUpload(true)}
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                                >
+                                    Share Your First Memory
+                                </button>
+                            </div>
+                        ) : viewMode === 'timeline' ? (
+                            <div className="space-y-6">
+                                {filteredPhotos.map(photo => (
+                                    <PhotoTimelineCard
+                                        key={photo.id}
+                                        photo={photo}
+                                        familyMembers={familyMembers}
+                                        currentUser={currentUser}
+                                        onLove={handleLovePhoto}
+                                        onClick={() => setSelectedPhoto(photo)}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {filteredPhotos.map(photo => (
+                                    <PhotoGridCard
+                                        key={photo.id}
+                                        photo={photo}
+                                        onClick={() => setSelectedPhoto(photo)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Modals */}
+                    {showUpload && (
+                        <UploadModal
+                            familyMembers={familyMembers}
+                            currentUser={currentUser}
+                            onClose={() => setShowUpload(false)}
+                            onUpload={handlePhotoUpload}
+                        />
+                    )}
+
+                    {selectedPhoto && (
+                        <PhotoDetailModal
+                            photo={selectedPhoto}
+                            familyMembers={familyMembers}
+                            currentUser={currentUser}
+                            onClose={() => setSelectedPhoto(null)}
+                            onLove={handleLovePhoto}
+                            onComment={handleAddComment}
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        // Render the application
+        ReactDOM.render(<TanieluFamilyStory />, document.getElementById('root'));
+    </script>
+</body>
+</html>
+
