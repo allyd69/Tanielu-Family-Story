@@ -67,7 +67,7 @@
     <div id="app"></div>
 
     <script>
-        // Premium Storage System
+        // ---------- Simple local storage wrapper ----------
         const PremiumStorage = {
             get(key) {
                 try {
@@ -100,7 +100,7 @@
             }
         };
 
-        // App State
+        // ---------- App state & rendering ----------
         const AppState = {
             currentUser: null,
             photos: [],
@@ -112,6 +112,17 @@
             searchTerm: '',
 
             init() {
+                // create one demo user so login works
+                if (!PremiumStorage.get('tanielu-user-admin')) {
+                    PremiumStorage.set('tanielu-user-admin', {
+                        id: 'admin',
+                        name: 'Demo Tanielu',
+                        email: 'demo@tanielu.family',
+                        password: 'demo123',
+                        roleLabel: 'Dad',
+                        avatar: '👨'
+                    });
+                }
                 this.loadPhotos();
                 this.render();
             },
@@ -125,9 +136,9 @@
                 if (!this.searchTerm) return this.photos;
                 const term = this.searchTerm.toLowerCase();
                 return this.photos.filter(photo => 
-                    photo.title.toLowerCase().includes(term) ||
-                    photo.description.toLowerCase().includes(term) ||
-                    photo.location.toLowerCase().includes(term)
+                    (photo.title || '').toLowerCase().includes(term) ||
+                    (photo.description || '').toLowerCase().includes(term) ||
+                    (photo.location || '').toLowerCase().includes(term)
                 );
             },
 
@@ -144,7 +155,6 @@
 
             render() {
                 const app = document.getElementById('app');
-                
                 if (this.currentView === 'welcome') {
                     app.innerHTML = this.renderWelcome();
                 } else if (this.currentView === 'signup') {
@@ -154,29 +164,28 @@
                 }
             },
 
+            // ---------- VIEW: Welcome ----------
             renderWelcome() {
                 return `
                     <div class="min-h-screen flex items-center justify-center p-6 animate-fade-in">
                         <div class="max-w-6xl w-full">
-                            <!-- Hero Section -->
                             <div class="text-center mb-16">
                                 <div class="inline-block mb-8">
                                     <div class="w-32 h-32 rounded-full bg-white shadow-2xl flex items-center justify-center">
                                         <span class="text-7xl">📖</span>
                                     </div>
                                 </div>
-                                <h1 class="font-display text-7xl font-bold text-white mb-6 tracking-tight">
+                                <h1 class="font-display text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
                                     Tanielu Family Story
                                 </h1>
                                 <p class="text-2xl text-purple-100 mb-4 font-light">
                                     Our Memories, Our Legacy, Forever Preserved
                                 </p>
                                 <p class="text-lg text-purple-200 max-w-2xl mx-auto">
-                                    An exclusive digital sanctuary where the Tanielu 'ohana comes together to celebrate, share, and preserve our most cherished moments
+                                    An exclusive digital sanctuary where the Tanielu 'ohana comes together to celebrate, share, and preserve our most cherished moments.
                                 </p>
                             </div>
 
-                            <!-- Login & Signup Cards -->
                             <div class="grid md:grid-cols-2 gap-8 mb-12">
                                 <!-- Login Card -->
                                 <div class="glass-effect rounded-3xl shadow-2xl p-10">
@@ -194,6 +203,9 @@
                                                 class="w-full px-5 py-4 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all text-gray-800"
                                                 placeholder="••••••••">
                                         </div>
+                                        <p class="text-sm text-gray-500">
+                                            Demo login: <span class="font-mono">demo@tanielu.family</span> / <span class="font-mono">demo123</span>
+                                        </p>
                                         <div id="loginError" class="hidden bg-red-50 border-2 border-red-200 text-red-700 px-5 py-4 rounded-xl text-sm font-medium"></div>
                                         <button type="submit" class="w-full btn-premium text-white py-5 rounded-xl font-bold text-lg">
                                             🔐 Enter Family Archive
@@ -210,26 +222,11 @@
                                                 ✨ Premium Features
                                             </h3>
                                             <ul class="space-y-3 text-gray-700">
-                                                <li class="flex items-start gap-3">
-                                                    <span class="text-purple-600 font-bold">✓</span>
-                                                    <span>Unlimited family photo & story uploads</span>
-                                                </li>
-                                                <li class="flex items-start gap-3">
-                                                    <span class="text-purple-600 font-bold">✓</span>
-                                                    <span>Interactive reactions & rich comments</span>
-                                                </li>
-                                                <li class="flex items-start gap-3">
-                                                    <span class="text-purple-600 font-bold">✓</span>
-                                                    <span>Gamified Story Points reward system</span>
-                                                </li>
-                                                <li class="flex items-start gap-3">
-                                                    <span class="text-purple-600 font-bold">✓</span>
-                                                    <span>Auto-organized timeline by date</span>
-                                                </li>
-                                                <li class="flex items-start gap-3">
-                                                    <span class="text-purple-600 font-bold">✓</span>
-                                                    <span>Private & secure family-only access</span>
-                                                </li>
+                                                <li class="flex items-start gap-3"><span class="text-purple-600 font-bold">✓</span><span>Unlimited family photo & story uploads.</span></li>
+                                                <li class="flex items-start gap-3"><span class="text-purple-600 font-bold">✓</span><span>Interactive reactions & rich comments.</span></li>
+                                                <li class="flex items-start gap-3"><span class="text-purple-600 font-bold">✓</span><span>Gamified Story Points reward system.</span></li>
+                                                <li class="flex items-start gap-3"><span class="text-purple-600 font-bold">✓</span><span>Auto-organized timeline by date.</span></li>
+                                                <li class="flex items-start gap-3"><span class="text-purple-600 font-bold">✓</span><span>Private & secure family-only access.</span></li>
                                             </ul>
                                         </div>
                                         <button onclick="showSignup()" class="w-full btn-premium text-white py-5 rounded-xl font-bold text-lg">
@@ -239,7 +236,6 @@
                                 </div>
                             </div>
 
-                            <!-- Footer -->
                             <div class="text-center text-white text-sm">
                                 <p class="font-light">Crafted with love for the Tanielu 'ohana 💜</p>
                             </div>
@@ -248,6 +244,7 @@
                 `;
             },
 
+            // ---------- VIEW: Signup ----------
             renderSignup() {
                 const roles = [
                     { value: 'mum', label: 'Mum', emoji: '👩' },
@@ -295,18 +292,11 @@
 
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-3">Your Role in the Family</label>
-                                    <select id="familyRole" required onchange="toggleCustomRole()"
+                                    <select id="familyRole" required
                                         class="w-full px-5 py-4 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all">
                                         <option value="">Select your family role...</option>
                                         ${roles.map(r => `<option value="${r.value}">${r.emoji} ${r.label}</option>`).join('')}
                                     </select>
-                                </div>
-
-                                <div id="customRoleDiv" class="hidden">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-3">Specify Your Role</label>
-                                    <input type="text" id="customRole"
-                                        class="w-full px-5 py-4 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all"
-                                        placeholder="e.g., Nephew, Niece, Friend of the family">
                                 </div>
 
                                 <div class="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-6">
@@ -332,196 +322,22 @@
                 `;
             },
 
+            // ---------- VIEW: Main (very simple placeholder) ----------
             renderMain() {
-                const userPoints = this.storyPoints[this.currentUser?.id]?.total || 0;
-                const filteredPhotos = this.getFilteredPhotos();
-
                 return `
-                    <div class="min-h-screen">
-                        <!-- Premium Header -->
-                        <header class="glass-effect shadow-2xl sticky top-0 z-50">
-                            <div class="max-w-7xl mx-auto px-6 py-6">
-                                <div class="flex items-center justify-between mb-6">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg">
-                                            <span class="text-3xl">📖</span>
-                                        </div>
-                                        <div>
-                                            <h1 class="font-display text-3xl font-bold gradient-text">Tanielu Family Story</h1>
-                                            <p class="text-gray-600 font-medium">
-                                                ${this.currentUser.avatar} ${this.currentUser.name} 
-                                                <span class="text-purple-600">(${this.currentUser.roleLabel})</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex items-center gap-4">
-                                        <div class="story-point-badge px-6 py-3 rounded-full text-white font-bold shadow-lg">
-                                            ⭐ ${userPoints} Points
-                                        </div>
-                                        <button onclick="showUploadModal()" 
-                                            class="btn-premium text-white px-6 py-3 rounded-xl font-bold">
-                                            ✨ Add Memory
-                                        </button>
-                                        <button onclick="logout()" 
-                                            class="text-gray-600 hover:text-gray-800 font-semibold">
-                                            🚪 Logout
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Search & View Controls -->
-                                <div class="flex items-center gap-4">
-                                    <div class="flex-1">
-                                        <input type="text" oninput="handleSearch(this.value)"
-                                            class="w-full px-5 py-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all"
-                                            placeholder="🔍 Search your family memories...">
-                                    </div>
-                                    <div class="flex gap-3">
-                                        <button onclick="setViewMode('timeline')" 
-                                            class="px-6 py-3 rounded-xl font-bold transition-all ${this.viewMode === 'timeline' ? 'btn-premium text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
-                                            📅 Timeline
-                                        </button>
-                                        <button onclick="setViewMode('grid')" 
-                                            class="px-6 py-3 rounded-xl font-bold transition-all ${this.viewMode === 'grid' ? 'btn-premium text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
-                                            ⊞ Gallery
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </header>
-
-                        <!-- Main Content -->
-                        <main class="max-w-7xl mx-auto px-6 py-12">
-                            ${filteredPhotos.length === 0 ? this.renderEmpty() : (this.viewMode === 'timeline' ? this.renderTimeline(filteredPhotos) : this.renderGrid(filteredPhotos))}
-                        </main>
-
-                        <div id="modalContainer"></div>
-                    </div>
-                `;
-            },
-
-            renderEmpty() {
-                return `
-                    <div class="text-center py-20 animate-fade-in">
-                        <div class="text-8xl mb-6">📷</div>
-                        <h3 class="font-display text-3xl font-bold text-gray-800 mb-4">No Memories Yet</h3>
-                        <p class="text-gray-600 text-lg mb-8">
-                            ${this.searchTerm ? 'Try a different search term' : 'Be the first to preserve a precious family moment'}
-                        </p>
-                        ${!this.searchTerm ? `
-                            <button onclick="showUploadModal()" 
-                                class="btn-premium text-white px-8 py-4 rounded-xl font-bold text-lg">
-                                ✨ Share First Memory
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-            },
-
-            renderTimeline(photos) {
-                return `
-                    <div class="space-y-10 animate-fade-in">
-                        ${photos.map(photo => `
-                            <div class="photo-card glass-effect rounded-3xl shadow-xl overflow-hidden">
-                                <div class="md:flex">
-                                    <div class="md:w-2/5">
-                                        <img src="${photo.imageUrl}" alt="${photo.title}" 
-                                            class="w-full h-80 md:h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
-                                            onclick='showPhotoDetail(${JSON.stringify(photo).replace(/'/g, "&#39;")})'>
-                                    </div>
-                                    <div class="p-8 md:w-3/5">
-                                        <h3 class="font-display text-3xl font-bold text-gray-800 mb-4">${photo.title}</h3>
-                                        <div class="flex items-center gap-6 text-gray-600 mb-6">
-                                            <span class="font-semibold">📅 ${new Date(photo.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                            <span class="font-semibold">📍 ${photo.location}</span>
-                                        </div>
-                                        <p class="text-gray-700 text-lg leading-relaxed mb-6">${photo.description}</p>
-                                        
-                                        ${this.renderReactions(photo.id)}
-                                        ${this.renderComments(photo.id)}
-                                        
-                                        <div class="text-sm text-gray-500 mt-6 pt-6 border-t-2 border-gray-100">
-                                            <span class="font-semibold">Shared by ${photo.uploadedBy} (${photo.uploadedByRole})</span> • 
-                                            ${new Date(photo.uploadedAt).toLocaleDateString()}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            },
-
-            renderGrid(photos) {
-                return `
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-fade-in">
-                        ${photos.map(photo => `
-                            <div class="photo-card glass-effect rounded-2xl shadow-xl overflow-hidden cursor-pointer"
-                                onclick='showPhotoDetail(${JSON.stringify(photo).replace(/'/g, "&#39;")})'>
-                                <img src="${photo.imageUrl}" alt="${photo.title}" 
-                                    class="w-full h-64 object-cover">
-                                <div class="p-6">
-                                    <h3 class="font-display text-2xl font-bold text-gray-800 mb-3">${photo.title}</h3>
-                                    <p class="text-gray-600 font-semibold mb-3">
-                                        📅 ${new Date(photo.date).toLocaleDateString()}
-                                    </p>
-                                    <p class="text-gray-700 line-clamp-2">${photo.description}</p>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            },
-
-            renderReactions(photoId) {
-                const photoReactions = this.reactions[photoId] || [];
-                return `
-                    <div class="mb-6 pb-6 border-b-2 border-gray-100">
-                        <div class="flex items-center gap-3 mb-3">
-                            ${['❤️', '😊', '😢', '😂', '🎉'].map(emoji => `
-                                <button onclick="addReaction('${photoId}', '${emoji}')" 
-                                    class="text-3xl hover:scale-125 transition-transform duration-200">
-                                    ${emoji}
-                                </button>
-                            `).join('')}
-                        </div>
-                        ${photoReactions.length > 0 ? `
-                            <div class="flex flex-wrap gap-3">
-                                ${photoReactions.map(r => `
-                                    <span class="bg-purple-50 px-3 py-1 rounded-full text-gray-700 font-medium">
-                                        ${r.emoji} ${r.userName}
-                                    </span>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            },
-
-            renderComments(photoId) {
-                const photoComments = this.comments[photoId] || [];
-                return `
-                    <div>
-                        <p class="font-bold text-gray-800 mb-4 text-lg">💬 Family Comments</p>
-                        ${photoComments.length > 0 ? `
-                            <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                                ${photoComments.map(c => `
-                                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl">
-                                        <p class="font-bold text-gray-800">${c.userName} <span class="text-purple-600">(${c.userRole})</span></p>
-                                        <p class="text-gray-700 mt-1">${c.text}</p>
-                                        <p class="text-xs text-gray-500 mt-2">${new Date(c.timestamp).toLocaleString()}</p>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                        <div class="flex gap-3">
-                            <input type="text" id="comment-${photoId}" placeholder="Share your thoughts..."
-                                class="flex-1 px-4 py-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all"
-                                onkeypress="if(event.key==='Enter') addComment('${photoId}')">
-                            <button onclick="addComment('${photoId}')" 
-                                class="btn-premium text-white px-6 py-3 rounded-xl font-bold">
-                                Post
+                    <div class="min-h-screen flex items-center justify-center p-6 animate-fade-in">
+                        <div class="glass-effect rounded-3xl shadow-2xl max-w-3xl w-full p-10 text-center">
+                            <h2 class="font-display text-4xl font-bold gradient-text mb-4">
+                                Welcome, ${this.currentUser.name}!
+                            </h2>
+                            <p class="text-gray-700 text-lg mb-6">
+                                This is your premium Tanielu Family Story archive. In the next step you can add timelines, galleries and more.
+                            </p>
+                            <p class="text-gray-500">
+                                For now, this confirms your GitHub Pages site is working.
+                            </p>
+                            <button onclick="logout()" class="mt-8 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                Logout
                             </button>
                         </div>
                     </div>
@@ -529,19 +345,20 @@
             }
         };
 
-        // Event Handlers
+        // ---------- Event handlers ----------
         function handleLogin(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             
-            const users = PremiumStorage.list('tanielu-user-');
-            const user = users.find(u => u.email === email && u.password === password);
+            const users = PremiumStorage.list('tanielu-user-').concat(
+                [PremiumStorage.get('tanielu-user-admin')].filter(Boolean)
+            );
+            const user = users.find(u => u && u.email === email && u.password === password);
             
             if (user) {
                 AppState.currentUser = user;
                 AppState.currentView = 'main';
-                AppState.loadPhotos();
                 AppState.render();
             } else {
                 const errorDiv = document.getElementById('loginError');
@@ -552,1107 +369,58 @@
 
         function handleSignup(e) {
             e.preventDefault();
-            const roles = [
-                { value: 'mum', label: 'Mum', emoji: '👩' },
-                { value: 'dad', label: 'Dad', emoji: '👨' },
-                { value: 'son', label: 'Son', emoji: '👦' },
-                { value: 'daughter', label: 'Daughter', emoji: '👧' },
-                { value: 'grandma', label: 'Grandma', emoji: '👵' },
-                { value: 'grandpa', label: 'Grandpa', emoji: '👴' },
-                { value: 'aunt', label: 'Aunt', emoji: '👩‍🦱' },
-                { value: 'uncle', label: 'Uncle', emoji: '👨‍🦱' },
-                { value: 'cousin', label: 'Cousin', emoji: '🧑' },
-                { value: 'sibling', label: 'Sibling', emoji: '👫' },
-                { value: 'other', label: 'Other', emoji: '👤' }
-            ];
-            
             const name = document.getElementById('signupName').value;
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
-            const familyRole = document.getElementById('familyRole').
-        // Utility components (from lucide-react, simulated with SVGs/placeholders for CDNs)
-        // Filled icons are used for a richer look where appropriate.
-        const Icon = ({ name, className = "w-5 h-5", children, filled=false, ...props }) => {
-            const iconStyles = {
-                Upload: 'text-primary-600', Search: 'text-gray-500', Grid: 'text-primary-700', List: 'text-primary-700',
-                Calendar: 'text-primary-600', MapPin: 'text-primary-600', Tag: 'text-gray-600', Users: 'text-gray-600',
-                Heart: 'text-red-500', MessageCircle: 'text-blue-500', Star: 'text-yellow-500', Award: 'text-yellow-600'
+            const familyRole = document.getElementById('familyRole').value;
+
+            const id = 'user-' + Date.now();
+            const roleMap = {
+                mum: 'Mum', dad: 'Dad', son: 'Son', daughter: 'Daughter',
+                grandma: 'Grandma', grandpa: 'Grandpa', aunt: 'Aunt',
+                uncle: 'Uncle', cousin: 'Cousin', sibling: 'Sibling', other: 'Family Member'
             };
-            const defaultClass = iconStyles[name] || 'text-gray-600';
-            const fill = filled ? 'currentColor' : 'none';
-
-            // Placeholder structure for icons
-            return (
-                <svg className={`${className} ${defaultClass}`} fill={fill} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
-                    {children}
-                </svg>
-            );
-        };
-        
-        // --- Icon Mappings (simulating lucide-react imports) ---
-        const Upload = (props) => <Icon name="Upload" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></Icon>;
-        const Search = (props) => <Icon name="Search" {...props}><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></Icon>;
-        const Grid = (props) => <Icon name="Grid" {...props}><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="11" x2="21" y2="11" /><line x1="11" y1="3" x2="11" y2="21" /></Icon>;
-        const List = (props) => <Icon name="List" {...props}><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></Icon>;
-        const Calendar = (props) => <Icon name="Calendar" {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></Icon>;
-        const MapPin = (props) => <Icon name="MapPin" {...props}><path d="M12 1v22h-.01c-6.09 0-11-4.91-11-11S5.91 1 12 1z"/><circle cx="12" cy="12" r="3" /></Icon>;
-        const Users = (props) => <Icon name="Users" {...props}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
-        const Heart = (props) => <Icon name="Heart" {...props}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></Icon>;
-        const MessageCircle = (props) => <Icon name="MessageCircle" {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></Icon>;
-        const Star = (props) => <Icon name="Star" {...props} filled={true}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></Icon>;
-        const Award = (props) => <Icon name="Award" {...props} filled={true}><circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.89" /></Icon>;
-
-
-        // Get React Hooks
-        const { useState, useEffect, useMemo } = React;
-
-        // --- Core Application Logic ---
-
-        const TanieluFamilyStory = () => {
-            const [currentUser, setCurrentUser] = useState(null);
-            const [showLogin, setShowLogin] = useState(true);
-            const [showSignup, setShowSignup] = useState(false);
-            const [photos, setPhotos] = useState([]);
-            const [filteredPhotos, setFilteredPhotos] = useState([]);
-            const [searchTerm, setSearchTerm] = useState('');
-            const [viewMode, setViewMode] = useState('timeline');
-            const [selectedPhoto, setSelectedPhoto] = useState(null);
-            const [showUpload, setShowUpload] = useState(false);
-            const [familyMembers, setFamilyMembers] = useState([]);
-            const [loading, setLoading] = useState(true);
-
-            // 1. Refined Family relationships list
-            const relationshipTypes = [
-                'Dad', 'Mum', 'Grandpa', 'Grandma',
-                'Older Brother', 'Younger Brother', 'Older Sister', 'Younger Sister',
-                'Older Cousin', 'Younger Cousin', 'Uncle', 'Aunty',
-                'Son', 'Daughter', 'Nephew', 'Niece',
-                'Other Relative'
-            ];
-
-            // Load data on mount
-            useEffect(() => {
-                loadData();
-            }, []);
-
-            // 2. Automated family line by birth date logic
-            const sortedFamilyMembers = useMemo(() => {
-                if (!familyMembers.length) return [];
-                return [...familyMembers].sort((a, b) => {
-                    if (!a.birthDate) return 1; // Put members without birth date last
-                    if (!b.birthDate) return -1;
-                    return new Date(a.birthDate) - new Date(b.birthDate);
-                });
-            }, [familyMembers]);
-
-            const loadData = async () => {
-                try {
-                    const [membersResult, photosResult] = await Promise.all([
-                        window.storage.get('tanielu-members'),
-                        window.storage.get('tanielu-photos')
-                    ]);
-
-                    let loadedMembers = [];
-                    if (membersResult?.value) {
-                        loadedMembers = JSON.parse(membersResult.value);
-                    } else {
-                        // Initialize with demo accounts. Added birthDate for sorting.
-                        const demoMembers = [
-                            { id: '1', email: 'john@tanielu.family', password: 'demo123', name: 'John Tanielu', relationship: 'Dad', avatar: '👨', joinedDate: '2024-01-01', storiesShared: 12, heartPoints: 45, birthDate: '1980-05-15' },
-                            { id: '2', email: 'mary@tanielu.family', password: 'demo123', name: 'Mary Tanielu', relationship: 'Mum', avatar: '👩', joinedDate: '2024-01-01', storiesShared: 18, heartPoints: 62, birthDate: '1982-08-20' },
-                            { id: '3', email: 'sarah@tanielu.family', password: 'demo123', name: 'Sarah Tanielu', relationship: 'Older Sister', avatar: '👧', joinedDate: '2024-01-15', storiesShared: 8, heartPoints: 28, birthDate: '2005-03-10' },
-                            { id: '4', email: 'david@tanielu.family', password: 'demo123', name: 'David Tanielu', relationship: 'Younger Brother', avatar: '👦', joinedDate: '2024-02-01', storiesShared: 5, heartPoints: 15, birthDate: '2010-11-25' }
-                        ];
-                        await window.storage.set('tanielu-members', JSON.stringify(demoMembers));
-                        loadedMembers = demoMembers;
-                    }
-                    setFamilyMembers(loadedMembers);
-
-
-                    if (photosResult?.value) {
-                        const loadedPhotos = JSON.parse(photosResult.value);
-                        setPhotos(loadedPhotos);
-                        setFilteredPhotos(loadedPhotos);
-                    }
-                } catch (error) {
-                    console.error('Error loading data:', error);
-                } finally {
-                    setLoading(false);
-                }
+            const avatarMap = {
+                mum: '👩', dad: '👨', son: '👦', daughter: '👧',
+                grandma: '👵', grandpa: '👴', aunt: '👩‍🦱',
+                uncle: '👨‍🦱', cousin: '🧑', sibling: '👫', other: '👤'
             };
 
-            const savePhotos = async (newPhotos) => {
-                try {
-                    await window.storage.set('tanielu-photos', JSON.stringify(newPhotos));
-                    // Sort photos by date descending for timeline view
-                    const sortedPhotos = newPhotos.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    setPhotos(sortedPhotos);
-                    setFilteredPhotos(sortedPhotos);
-                } catch (error) {
-                    console.error('Error saving photos:', error);
-                    alert('Failed to save photos');
-                }
+            const user = {
+                id,
+                name,
+                email,
+                password,
+                roleLabel: roleMap[familyRole] || 'Family Member',
+                avatar: avatarMap[familyRole] || '👤'
             };
 
-            const saveFamilyMembers = async (members) => {
-                try {
-                    await window.storage.set('tanielu-members', JSON.stringify(members));
-                    setFamilyMembers(members);
-                } catch (error) {
-                    console.error('Error saving family members:', error);
-                }
-            };
+            PremiumStorage.set('tanielu-user-' + id, user);
+            AppState.awardPoints(id, 50, 'Joined the family archive');
 
-            // Authentication
-            const handleLogin = (email, password) => {
-                const member = familyMembers.find(m => m.email === email && m.password === password);
-                if (member) {
-                    setCurrentUser(member);
-                    setShowLogin(false);
-                } else {
-                    alert('Invalid email or password');
-                }
-            };
+            AppState.currentUser = user;
+            AppState.currentView = 'main';
+            AppState.render();
+        }
 
-            const handleSignup = async (signupData) => {
-                const newMember = {
-                    id: Date.now().toString(),
-                    email: signupData.email,
-                    password: signupData.password,
-                    name: signupData.name,
-                    relationship: signupData.relationship,
-                    avatar: signupData.avatar,
-                    birthDate: signupData.birthDate, // Included birth date
-                    joinedDate: new Date().toISOString().split('T')[0],
-                    storiesShared: 0,
-                    heartPoints: 0
-                };
+        function showSignup() {
+            AppState.currentView = 'signup';
+            AppState.render();
+        }
 
-                // Basic validation for birthDate
-                if (!newMember.birthDate) {
-                    alert('Please provide a birth date to establish the family line.');
-                    return;
-                }
+        function closeSignup() {
+            AppState.currentView = 'welcome';
+            AppState.render();
+        }
 
-                const updatedMembers = [...familyMembers, newMember];
-                await saveFamilyMembers(updatedMembers);
-                setCurrentUser(newMember);
-                setShowSignup(false);
-                setShowLogin(false);
-            };
+        function logout() {
+            AppState.currentUser = null;
+            AppState.currentView = 'welcome';
+            AppState.render();
+        }
 
-            // Photo management
-            const handlePhotoUpload = async (photoData) => {
-                const newPhoto = {
-                    id: Date.now().toString(),
-                    ...photoData,
-                    uploadedBy: currentUser.id,
-                    uploadedByName: currentUser.name,
-                    uploadDate: new Date().toISOString(),
-                    loves: [],
-                    comments: [],
-                    memories: []
-                };
-
-                const updatedPhotos = [...photos, newPhoto];
-                await savePhotos(updatedPhotos);
-
-                // Update user stats
-                const updatedMembers = familyMembers.map(m => 
-                    m.id === currentUser.id 
-                        ? { ...m, storiesShared: m.storiesShared + 1, heartPoints: m.heartPoints + 5 }
-                        : m
-                );
-                await saveFamilyMembers(updatedMembers);
-                setCurrentUser(updatedMembers.find(m => m.id === currentUser.id));
-
-                setShowUpload(false);
-            };
-
-            const handleLovePhoto = async (photoId) => {
-                const updatedPhotos = photos.map(photo => {
-                    if (photo.id === photoId) {
-                        const loves = photo.loves || [];
-                        const hasLoved = loves.includes(currentUser.id);
-                        return {
-                            ...photo,
-                            loves: hasLoved 
-                                ? loves.filter(id => id !== currentUser.id)
-                                : [...loves, currentUser.id]
-                        };
-                    }
-                    return photo;
-                });
-
-                await savePhotos(updatedPhotos);
-                if (selectedPhoto?.id === photoId) {
-                    setSelectedPhoto(updatedPhotos.find(p => p.id === photoId));
-                }
-            };
-
-            const handleAddComment = async (photoId, comment) => {
-                const updatedPhotos = photos.map(photo => {
-                    if (photo.id === photoId) {
-                        return {
-                            ...photo,
-                            comments: [...(photo.comments || []), {
-                                id: Date.now().toString(),
-                                userId: currentUser.id,
-                                userName: currentUser.name,
-                                userAvatar: currentUser.avatar,
-                                text: comment,
-                                date: new Date().toISOString()
-                            }]
-                        };
-                    }
-                    return photo;
-                });
-
-                await savePhotos(updatedPhotos);
-                if (selectedPhoto?.id === photoId) {
-                    setSelectedPhoto(updatedPhotos.find(p => p.id === photoId));
-                }
-            };
-
-            // Search
-            useEffect(() => {
-                if (searchTerm) {
-                    const filtered = photos.filter(photo =>
-                        photo.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        photo.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        photo.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        photo.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-                    );
-                    setFilteredPhotos(filtered);
-                } else {
-                    setFilteredPhotos(photos);
-                }
-            }, [searchTerm, photos]);
-
-            if (loading) {
-                return (
-                    <div className="min-h-screen bg-primary-50 flex items-center justify-center">
-                        <div className="text-center p-12 bg-white rounded-3xl shadow-xl">
-                            <div className="text-6xl mb-4 animate-pulse">🏛️</div>
-                            <div className="text-2xl font-serif font-bold text-primary-900">Building the Tanielu Legacy...</div>
-                            <p className="text-gray-500 mt-2">A moment of reflection before the memories begin.</p>
-                        </div>
-                    </div>
-                );
-            }
-
-            if (showLogin || showSignup) {
-                return <AuthScreen 
-                    showSignup={showSignup}
-                    setShowSignup={setShowSignup}
-                    onLogin={handleLogin}
-                    onSignup={handleSignup}
-                    relationshipTypes={relationshipTypes}
-                />;
-            }
-
-            return (
-                <div className="min-h-screen bg-gray-100 font-sans">
-                    {/* Header: Premium, Sticky, Deep Primary Color */}
-                    <header className="bg-white shadow-lg sticky top-0 z-50">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                                {/* Logo & Title */}
-                                <div className="flex items-center gap-3 mb-4 lg:mb-0">
-                                    <div className="text-4xl">🏛️</div>
-                                    <div>
-                                        <h1 className="text-3xl font-serif font-bold text-primary-900">Tanielu Legacy Archive</h1>
-                                        <p className="text-sm text-gray-500">Chronicles of our family story</p>
-                                    </div>
-                                </div>
-                                
-                                {/* User Info & Switch */}
-                                <div className="flex items-center gap-6">
-                                    <div className="flex items-center gap-3 p-2 bg-primary-50 rounded-xl shadow-inner">
-                                        <span className="text-3xl">{currentUser.avatar}</span>
-                                        <div>
-                                            <div className="font-semibold text-primary-900">{currentUser.name}</div>
-                                            <div className="text-xs text-primary-700">{currentUser.relationship}</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col gap-1 text-sm text-primary-700">
-                                        <span className="flex items-center gap-1 font-semibold">
-                                            <Award className="w-4 h-4 text-accent-600" filled={true} />
-                                            {currentUser.storiesShared} Contributions
-                                        </span>
-                                        <span className="flex items-center gap-1 font-semibold">
-                                            <Heart className="w-4 h-4 text-red-500" filled={true} />
-                                            {currentUser.heartPoints} Affinity Points
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={() => setShowLogin(true)}
-                                        className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition duration-150"
-                                    >
-                                        Switch
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Search & Actions Bar */}
-                            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                                <div className="flex-1 relative">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search memories, locations, tags, and people..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-600 focus:border-primary-600 transition"
-                                    />
-                                </div>
-                                <button
-                                    onClick={() => setViewMode(viewMode === 'timeline' ? 'grid' : 'timeline')}
-                                    className="p-3 bg-primary-600 text-white rounded-xl shadow-md hover:bg-primary-700 transition duration-150"
-                                    title={viewMode === 'timeline' ? 'Switch to Grid View' : 'Switch to Timeline View'}
-                                >
-                                    {viewMode === 'timeline' ? <Grid className="w-6 h-6 text-white" /> : <List className="w-6 h-6 text-white" />}
-                                </button>
-                                <button
-                                    onClick={() => setShowUpload(true)}
-                                    className="px-6 py-3 bg-accent-600 text-white rounded-xl shadow-lg hover:bg-accent-500 flex items-center gap-2 font-semibold transition duration-150"
-                                >
-                                    <Upload className="w-5 h-5 text-white" />
-                                    Share Memory
-                                </button>
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* Main Content */}
-                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                        {/* Family Stats Bar */}
-                        <div className="bg-white rounded-2xl p-6 mb-8 shadow-xl border border-primary-100">
-                            <div className="flex flex-col md:flex-row items-center justify-between">
-                                <div className="mb-4 md:mb-0">
-                                    <h3 className="text-xl font-serif font-bold text-primary-900 mb-1">Generational Overview</h3>
-                                    <p className="text-gray-600">The collective history preserved across the Tanielu lineage.</p>
-                                </div>
-                                <div className="flex gap-8">
-                                    <div className="text-center">
-                                        <div className="text-4xl font-bold text-primary-600">{familyMembers.length}</div>
-                                        <div className="text-sm text-gray-500">Generations</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-4xl font-bold text-red-500">{photos.reduce((sum, p) => sum + (p.loves?.length || 0), 0)}</div>
-                                        <div className="text-sm text-gray-500">Total Affection</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-4xl font-bold text-blue-600">{photos.length}</div>
-                                        <div className="text-sm text-gray-500">Total Memories</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Family Lineage (Displaying sorted members) */}
-                        <FamilyLineageCard members={sortedFamilyMembers} />
-
-                        {/* Photos Display */}
-                        {filteredPhotos.length === 0 ? (
-                            <div className="bg-white rounded-2xl p-16 text-center shadow-xl mt-8">
-                                <div className="text-8xl mb-4">📜</div>
-                                <h3 className="text-2xl font-serif font-bold text-gray-900 mb-3">The Blank Page</h3>
-                                <p className="text-gray-600 mb-8 max-w-lg mx-auto">Your search yielded no results, or this chapter has yet to be written. Share a memory to start the story.</p>
-                                <button
-                                    onClick={() => setShowUpload(true)}
-                                    className="px-8 py-3 bg-accent-600 text-white rounded-xl hover:bg-accent-500 font-semibold shadow-md transition"
-                                >
-                                    Share the First Memory
-                                </button>
-                            </div>
-                        ) : viewMode === 'timeline' ? (
-                            <div className="space-y-10 mt-8">
-                                {filteredPhotos.map(photo => (
-                                    <PhotoTimelineCard
-                                        key={photo.id}
-                                        photo={photo}
-                                        familyMembers={familyMembers}
-                                        currentUser={currentUser}
-                                        onLove={handleLovePhoto}
-                                        onClick={() => setSelectedPhoto(photo)}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
-                                {filteredPhotos.map(photo => (
-                                    <PhotoGridCard
-                                        key={photo.id}
-                                        photo={photo}
-                                        onClick={() => setSelectedPhoto(photo)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </main>
-
-                    {/* Modals */}
-                    {showUpload && (
-                        <UploadModal
-                            familyMembers={familyMembers}
-                            currentUser={currentUser}
-                            onClose={() => setShowUpload(false)}
-                            onUpload={handlePhotoUpload}
-                        />
-                    )}
-
-                    {selectedPhoto && (
-                        <PhotoDetailModal
-                            photo={selectedPhoto}
-                            familyMembers={familyMembers}
-                            currentUser={currentUser}
-                            onClose={() => setSelectedPhoto(null)}
-                            onLove={handleLovePhoto}
-                            onComment={handleAddComment}
-                        />
-                    )}
-                </div>
-            );
-        };
-        
-        // --- Component Definitions ---
-
-        // Family Lineage Component (New)
-        const FamilyLineageCard = ({ members }) => {
-            return (
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-primary-100 mt-8">
-                    <h3 className="text-xl font-serif font-bold text-primary-900 mb-4">The Tanielu Lineage</h3>
-                    <p className="text-sm text-gray-500 mb-4">Members are automatically sorted by birth date, from oldest to youngest, forming our generational structure.</p>
-                    <div className="space-y-4">
-                        {members.map((member, index) => (
-                            <div key={member.id} className="flex items-center gap-4 p-3 bg-primary-50 rounded-lg border-l-4 border-primary-600">
-                                <div className="text-3xl">{member.avatar}</div>
-                                <div className="flex-1">
-                                    <div className="font-semibold text-gray-900">{member.name}</div>
-                                    <div className="text-sm text-primary-700">{member.relationship}</div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-sm text-gray-700 font-medium">Born: {member.birthDate}</div>
-                                    <div className="text-xs text-gray-500">Joined: {member.joinedDate}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-
-        // Auth Screen Component
-        const AuthScreen = ({ showSignup, setShowSignup, onLogin, onSignup, relationshipTypes }) => {
-            const [formData, setFormData] = useState({
-                email: '',
-                password: '',
-                name: '',
-                relationship: '',
-                birthDate: '', // Added birthDate
-                avatar: '👤'
-            });
-
-            const avatarOptions = ['👨', '👩', '👦', '👧', '👴', '👵', '👶', '🧑', '👨‍🦳', '👩‍🦳'];
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if (showSignup) {
-                    if (!formData.name || !formData.email || !formData.password || !formData.relationship || !formData.birthDate) {
-                        alert('Please fill in all required fields (including Birth Date).');
-                        return;
-                    }
-                    onSignup(formData);
-                } else {
-                    onLogin(formData.email, formData.password);
-                }
-            };
-
-            return (
-                <div className="min-h-screen bg-primary-50 flex items-center justify-center p-4 font-sans">
-                    <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 w-full max-w-lg border border-primary-100">
-                        <div className="text-center mb-10">
-                            <div className="text-7xl mb-4">🏛️</div>
-                            <h1 className="text-4xl font-serif font-bold text-primary-900 mb-2">Welcome Home</h1>
-                            <p className="text-gray-600">Securely access the Tanielu Family Story.</p>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {showSignup && (
-                                <>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Your Full Name</label>
-                                        <input
-                                            type="text"
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-primary-600 focus:border-primary-600 transition"
-                                            placeholder="Afioga Tanielu"
-                                            required
-                                        />
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Birth Date</label>
-                                            <input
-                                                type="date"
-                                                value={formData.birthDate}
-                                                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-primary-600 focus:border-primary-600 transition"
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Your Relationship</label>
-                                            <select
-                                                value={formData.relationship}
-                                                onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-primary-600 focus:border-primary-600 transition"
-                                                required
-                                            >
-                                                <option value="">Select Role</option>
-                                                {relationshipTypes.map(type => (
-                                                    <option key={type} value={type}>{type}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Choose Your Icon</label>
-                                        <div className="grid grid-cols-5 gap-3">
-                                            {avatarOptions.map(avatar => (
-                                                <button
-                                                    key={avatar}
-                                                    type="button"
-                                                    onClick={() => setFormData({ ...formData, avatar })}
-                                                    className={`text-4xl p-3 rounded-xl border-2 transition duration-150 ${
-                                                        formData.avatar === avatar ? 'border-primary-600 bg-primary-100 shadow-gold' : 'border-gray-200 hover:bg-gray-50'
-                                                    }`}
-                                                >
-                                                    {avatar}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-primary-600 focus:border-primary-600 transition"
-                                    placeholder="your.email@tanielu.family"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                                <input
-                                    type="password"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-primary-600 focus:border-primary-600 transition"
-                                    placeholder="••••••••"
-                                    required
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="w-full py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-semibold shadow-md transition duration-150"
-                            >
-                                {showSignup ? 'Establish Membership' : 'Enter Archive'}
-                            </button>
-                        </form>
-
-                        <div className="mt-8 text-center">
-                            <button
-                                onClick={() => {
-                                    setShowSignup(!showSignup);
-                                    setFormData({ email: '', password: '', name: '', relationship: '', avatar: '👤', birthDate: '' });
-                                }}
-                                className="text-primary-600 hover:text-primary-700 text-sm font-medium transition"
-                            >
-                                {showSignup ? 'Already a member? Login here' : 'New to the legacy? Request Membership'}
-                            </button>
-                        </div>
-
-                        {!showSignup && (
-                            <div className="mt-6 p-4 bg-primary-50 rounded-xl border border-primary-100">
-                                <p className="text-sm text-gray-700 mb-2 font-semibold">Quick Demo Access:</p>
-                                <p className="text-xs text-gray-600">Dad: john@tanielu.family / demo123</p>
-                                <p className="text-xs text-gray-600">Mum: mary@tanielu.family / demo123</p>
-                                <p className="text-xs text-gray-600">Sister: sarah@tanielu.family / demo123</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-        // Photo Timeline Card
-        const PhotoTimelineCard = ({ photo, familyMembers, currentUser, onLove, onClick }) => {
-            const uploader = familyMembers.find(m => m.id === photo.uploadedBy);
-            const hasLoved = photo.loves?.includes(currentUser.id);
-
-            return (
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100">
-                    <div className="p-5 border-b border-gray-100">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <span className="text-3xl">{uploader?.avatar}</span>
-                                <div>
-                                    <div className="font-semibold text-gray-900">{photo.uploadedByName}</div>
-                                    <div className="text-xs text-gray-500">Shared: {new Date(photo.uploadDate).toLocaleDateString()}</div>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-sm font-serif font-bold text-primary-600">{photo.date}</div>
-                                {photo.location && (
-                                    <div className="text-xs text-gray-500 flex items-center justify-end gap-1 mt-1">
-                                        <MapPin className="w-3 h-3 text-primary-600" />
-                                        {photo.location}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div 
-                        className="cursor-pointer"
-                        onClick={onClick}
-                    >
-                        <div className="aspect-video bg-primary-100 flex items-center justify-center p-8">
-                            <div className="text-center">
-                                <div className="text-8xl mb-4 text-primary-600">📸</div>
-                                <div className="text-2xl font-serif font-bold text-primary-900">{photo.title}</div>
-                                <p className="text-gray-600 mt-2">Click to read the full story...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-5">
-                        <p className="text-gray-700 mb-4 line-clamp-2">{photo.description}</p>
-
-                        {photo.tags && photo.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-4 pt-3 border-t border-gray-100">
-                                {photo.tags.map((tag, idx) => (
-                                    <span key={idx} className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-medium shadow-sm">
-                                        #{tag}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="flex items-center gap-6 pt-3 border-t border-gray-100">
-                            <button
-                                onClick={() => onLove(photo.id)}
-                                className={`flex items-center gap-2 font-semibold ${hasLoved ? 'text-red-500' : 'text-gray-600'} hover:text-red-500 transition duration-150`}
-                            >
-                                <Heart className={`w-6 h-6 ${hasLoved ? 'fill-current' : ''}`} />
-                                <span className="text-sm">{photo.loves?.length || 0} Loves</span>
-                            </button>
-                            <button onClick={onClick} className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition duration-150">
-                                <MessageCircle className="w-6 h-6" />
-                                <span className="text-sm font-medium">{photo.comments?.length || 0} Comments</span>
-                            </button>
-                            {photo.peopleTagged && photo.peopleTagged.length > 0 && (
-                                <div className="flex items-center gap-2 text-gray-600 ml-auto">
-                                    <Users className="w-5 h-5" />
-                                    <span className="text-sm font-medium">{photo.peopleTagged.length} participants</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // Photo Grid Card
-        const PhotoGridCard = ({ photo, onClick }) => {
-            return (
-                <div 
-                    onClick={onClick}
-                    className="bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 border border-gray-100"
-                >
-                    <div className="aspect-square bg-primary-100 flex items-center justify-center p-4">
-                        <div className="text-center">
-                            <div className="text-5xl mb-3 text-primary-600">📸</div>
-                            <div className="font-serif font-bold text-gray-900 text-lg line-clamp-2">{photo.title}</div>
-                        </div>
-                    </div>
-                    <div className="p-4">
-                        <div className="text-sm text-gray-600 mb-2 font-medium flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-primary-600" />
-                            {photo.date}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                                <Heart className="w-3 h-3 text-red-500" />
-                                {photo.loves?.length || 0}
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <MessageCircle className="w-3 h-3 text-blue-500" />
-                                {photo.comments?.length || 0}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // Upload Modal
-        const UploadModal = ({ familyMembers, currentUser, onClose, onUpload }) => {
-            const [formData, setFormData] = useState({
-                title: '',
-                description: '',
-                date: new Date().toISOString().split('T')[0],
-                location: '',
-                tags: '',
-                peopleTagged: []
-            });
-            const [uploadType, setUploadType] = useState('single'); // single or collage
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                onUpload({
-                    ...formData,
-                    tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
-                });
-            };
-
-            return (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 font-sans backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[95vh] overflow-y-auto shadow-2xl">
-                        <div className="p-6 border-b border-gray-100 sticky top-0 bg-white rounded-t-3xl">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-serif font-bold text-primary-900">Share a Memory</h2>
-                                <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-3xl transition">×</button>
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                            
-                            {/* Upload Placeholder */}
-                            <div className="bg-primary-50 border-2 border-primary-200 border-dashed rounded-xl p-8 text-center shadow-inner">
-                                <Upload className="w-16 h-16 mx-auto mb-4 text-primary-600" />
-                                <p className="text-xl font-semibold text-gray-700">Image Upload Functionality</p>
-                                <p className="text-sm text-gray-500 mt-2">
-                                    **Note on Collage Feature:** For this simplified single-file platform, advanced image processing to select and post *individual* photos from a *collage* is not available. Please enter the memory details below.
-                                </p>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4 border-b pb-6 border-gray-100">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Memory Title *</label>
-                                    <input
-                                        type="text"
-                                        value={formData.title}
-                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-primary-600 focus:border-primary-600 transition"
-                                        placeholder="That unforgettable Christmas"
-                                        required
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                                        <input
-                                            type="date"
-                                            value={formData.date}
-                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-primary-600 focus:border-primary-600 transition"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                                        <input
-                                            type="text"
-                                            value={formData.location}
-                                            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-primary-600 focus:border-primary-600 transition"
-                                            placeholder="Apia, Samoa"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Story & Details *</label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl h-32 resize-none focus:ring-primary-600 focus:border-primary-600 transition"
-                                    placeholder="Tell the complete story behind this memory, including who, what, when, and why it's important..."
-                                    required
-                                />
-                            </div>
-                            
-                            {/* People Tagging */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Who's in this memory?</label>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {familyMembers.map(member => (
-                                        <label key={member.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition duration-150 ${
-                                            formData.peopleTagged.includes(member.id) ? 'border-primary-600 bg-primary-50 shadow-md' : 'border-gray-200 hover:bg-gray-50'
-                                        }`}>
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.peopleTagged.includes(member.id)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setFormData({ ...formData, peopleTagged: [...formData.peopleTagged, member.id] });
-                                                    } else {
-                                                        setFormData({ ...formData, peopleTagged: formData.peopleTagged.filter(id => id !== member.id) });
-                                                    }
-                                                }}
-                                                className="rounded text-primary-600 focus:ring-primary-500"
-                                            />
-                                            <span className="text-xl">{member.avatar}</span>
-                                            <span className="text-sm font-medium text-gray-900">{member.name}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                            
-                            {/* Tags */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tags (Keywords)</label>
-                                <input
-                                    type="text"
-                                    value={formData.tags}
-                                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-primary-600 focus:border-primary-600 transition"
-                                    placeholder="anniversary, travel, food (comma separated)"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 font-semibold transition"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-6 py-3 bg-accent-600 text-white rounded-xl hover:bg-accent-500 font-semibold shadow-md transition"
-                                >
-                                    Preserve Memory
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        // Photo Detail Modal
-        const PhotoDetailModal = ({ photo, familyMembers, currentUser, onClose, onLove, onComment }) => {
-            const [commentText, setCommentText] = useState('');
-            const uploader = familyMembers.find(m => m.id === photo.uploadedBy);
-            const hasLoved = photo.loves?.includes(currentUser.id);
-
-            const handleSubmitComment = (e) => {
-                e.preventDefault();
-                if (commentText.trim()) {
-                    onComment(photo.id, commentText);
-                    setCommentText('');
-                }
-            };
-
-            return (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 font-sans backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl max-w-5xl w-full max-h-[95vh] overflow-y-auto shadow-2xl">
-                        <div className="p-6 border-b border-gray-100 sticky top-0 bg-white rounded-t-3xl">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-3xl">{uploader?.avatar}</span>
-                                    <div>
-                                        <div className="font-semibold text-gray-900">{photo.uploadedByName}</div>
-                                        <div className="text-sm text-gray-500">Shared: {new Date(photo.uploadDate).toLocaleDateString()}</div>
-                                    </div>
-                                </div>
-                                <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-3xl transition">×</button>
-                            </div>
-                        </div>
-
-                        <div className="p-6">
-                            {/* Photo Placeholder */}
-                            <div className="aspect-video bg-primary-100 rounded-2xl flex items-center justify-center mb-8 shadow-inner">
-                                <div className="text-center p-8">
-                                    <div className="text-9xl mb-4 text-primary-600">📸</div>
-                                    <div className="text-3xl font-serif font-bold text-primary-900">{photo.title}</div>
-                                </div>
-                            </div>
-
-                            {/* Details & Metadata */}
-                            <div className="space-y-6 mb-8 border-b pb-6 border-gray-100">
-                                <div>
-                                    <h3 className="text-3xl font-serif font-bold text-primary-900 mb-3">{photo.title}</h3>
-                                    <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap">{photo.description}</p>
-                                </div>
-
-                                <div className="grid grid-cols-3 gap-6 py-4 border-t border-b border-gray-100 bg-gray-50 rounded-xl p-4">
-                                    <div className="flex items-center gap-3">
-                                        <Calendar className="w-6 h-6 text-primary-600" />
-                                        <div>
-                                            <div className="text-xs text-gray-600 font-medium">Date of Memory</div>
-                                            <div className="font-semibold text-gray-900">{photo.date}</div>
-                                        </div>
-                                    </div>
-                                    {photo.location && (
-                                        <div className="flex items-center gap-3">
-                                            <MapPin className="w-6 h-6 text-primary-600" />
-                                            <div>
-                                                <div className="text-xs text-gray-600 font-medium">Location</div>
-                                                <div className="font-semibold text-gray-900">{photo.location}</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-3">
-                                        <Users className="w-6 h-6 text-primary-600" />
-                                        <div>
-                                            <div className="text-xs text-gray-600 font-medium">Participants</div>
-                                            <div className="font-semibold text-gray-900">{photo.peopleTagged?.length || 0} People Tagged</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* People Tagged */}
-                                {photo.peopleTagged && photo.peopleTagged.length > 0 && (
-                                    <div>
-                                        <div className="text-sm font-semibold text-gray-700 mb-2">People Present:</div>
-                                        <div className="flex flex-wrap gap-3">
-                                            {photo.peopleTagged.map(memberId => {
-                                                const member = familyMembers.find(m => m.id === memberId);
-                                                return member ? (
-                                                    <div key={memberId} className="flex items-center gap-2 px-4 py-2 bg-primary-100 rounded-full shadow-sm border border-primary-200">
-                                                        <span className="text-xl">{member.avatar}</span>
-                                                        <span className="text-sm font-medium text-primary-900">{member.name}</span>
-                                                    </div>
-                                                ) : null;
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Tags */}
-                                {photo.tags && photo.tags.length > 0 && (
-                                    <div>
-                                        <div className="text-sm font-semibold text-gray-700 mb-2">Keywords:</div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {photo.tags.map((tag, idx) => (
-                                                <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium shadow-sm">
-                                                    #{tag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Interactions */}
-                            <div className="border-t pt-6 mb-8">
-                                <div className="flex items-center gap-8 mb-4">
-                                    <button
-                                        onClick={() => onLove(photo.id)}
-                                        className={`flex items-center gap-2 font-semibold text-lg ${hasLoved ? 'text-red-500' : 'text-gray-600'} hover:text-red-500 transition duration-150`}
-                                    >
-                                        <Heart className={`w-8 h-8 ${hasLoved ? 'fill-current' : ''}`} />
-                                        <span className="font-semibold">{photo.loves?.length || 0} Affection</span>
-                                    </button>
-                                    <div className="flex items-center gap-2 text-gray-600 text-lg">
-                                        <MessageCircle className="w-8 h-8" />
-                                        <span className="font-semibold">{photo.comments?.length || 0} Comments</span>
-                                    </div>
-                                </div>
-
-                                {/* Loved by */}
-                                {photo.loves && photo.loves.length > 0 && (
-                                    <div className="mb-4 p-4 bg-red-50 rounded-xl border border-red-200">
-                                        <div className="text-sm text-gray-700">
-                                            <span className="font-bold">Loved by:</span>{' '}
-                                            {photo.loves.map(userId => {
-                                                const member = familyMembers.find(m => m.id === userId);
-                                                return member ? member.name : 'A Family Member';
-                                            }).join(', ')}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Comments Section */}
-                            <div className="border-t pt-8">
-                                <h4 className="font-serif font-bold text-xl text-primary-900 mb-6">Family Dialogue ({photo.comments?.length || 0})</h4>
-                                
-                                {/* Comment Form */}
-                                <form onSubmit={handleSubmitComment} className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                    <div className="flex gap-4">
-                                        <span className="text-3xl">{currentUser.avatar}</span>
-                                        <div className="flex-1">
-                                            <textarea
-                                                value={commentText}
-                                                onChange={(e) => setCommentText(e.target.value)}
-                                                placeholder="Contribute your perspective or memory about this post..."
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none focus:ring-primary-600 focus:border-primary-600 transition"
-                                                rows="3"
-                                            />
-                                            <button
-                                                type="submit"
-                                                disabled={!commentText.trim()}
-                                                className="mt-3 px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold transition"
-                                            >
-                                                Post Insight
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-
-                                {/* Comments List */}
-                                <div className="space-y-6">
-                                    {photo.comments && photo.comments.length > 0 ? (
-                                        photo.comments.slice().reverse().map(comment => (
-                                            <div key={comment.id} className="flex gap-4">
-                                                <span className="text-3xl">{comment.userAvatar}</span>
-                                                <div className="flex-1 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                        <span className="font-semibold text-gray-900">{comment.userName}</span>
-                                                        <span className="text-xs text-gray-500">
-                                                            {new Date(comment.date).toLocaleDateString()}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-gray-700 leading-relaxed">{comment.text}</p>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-xl border border-gray-100">
-                                            <MessageCircle className="w-14 h-14 mx-auto mb-4 text-gray-300" />
-                                            <p className="font-medium">No dialogue yet. Start the conversation!</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // Render the application
-        ReactDOM.render(<TanieluFamilyStory />, document.getElementById('root'));
+        // ---------- boot the app ----------
+        AppState.init();
     </script>
 </body>
 </html>
